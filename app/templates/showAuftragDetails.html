@@ -41,6 +41,28 @@
                 <td align="center"></td>
             {% endif %}
 
+            {% if data['statusApps']['perf_ident'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">PERF_I</button></td>
+            {% elif data['statusApps']['perf_ident'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=PERF_IDENT&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=PERF_IDENT&transaktionsId={{ data['statusApps']['transaktionsId'] }}','PERF_I','resizable,height=600,width=800')">PERF_I</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if data['statusApps']['perf_pers'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">PERF_I</button></td>
+            {% elif data['statusApps']['perf_pers'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=PERF_PERS&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=PERF_PERS&transaktionsId={{ data['statusApps']['transaktionsId'] }}','PERF_P','resizable,height=600,width=800')">PERF_P</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
             {% if data['statusApps']['kaus'] == "2" %}
                 <td align="center"><button class="btn btn-danger" type="submit">KAUS</button></td>
             {% elif data['statusApps']['kaus'] == "1" %}

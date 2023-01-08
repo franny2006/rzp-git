@@ -29,8 +29,9 @@ class cls_dbAktionen():
                 mycursor.execute(statement, val)
             else:
                 mycursor.execute(statement)
-            self.mydb.commit()
+
             lastRowId = mycursor.lastrowid
+            self.mydb.commit()
 
         except mysql.connector.Error as er:
             if self.mycursor:

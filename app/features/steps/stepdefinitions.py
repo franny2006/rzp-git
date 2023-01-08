@@ -3,7 +3,7 @@ import json
 from cls_db import cls_dbAktionen
 
 db = cls_dbAktionen()
-rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'KAUS']
+rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS']
 
 @given('Es wurde eine Auftragsdatei eingespielt')
 def step_init(context):
@@ -35,25 +35,25 @@ def step_verarbeitungPruefen(context):
 
     assert dbFehlt == "", f'Verarbeitung in Datenbanken unvollständig: ' + dbFehlt
 
-@then('enthaelt in der Datenbank {zielDb} das Feld {zielFeld} den gleichen Inhalt wie {feldAuftrag}')
-def step_verifyFelder(context, zielDb, zielFeld, feldAuftrag):
+@then("enthaelt in der Datenbank {zielDb} das Feld {zielFeld} den ggf. nach Regel {regel} konvertierten Wert {inhaltAuftrag}")
+def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
     # Auftragdaten ermitteln
     # DS-ID ermitteln
-    auftragBereiche = feldAuftrag.split(".")
-    tabelleSatzart = auftragBereiche[0]
-    feldNameSatzart = auftragBereiche[1]
-    sqlIdentifier = "select runId, dsId from sa_ft where panr = '" + context.panr + "' and prnr = '" + context.prnr + "' and voat = '" + context.voat + "' and laufendeNummerZl = '" + context.lfdNr + "'"
-    auftragsIdentifier = db.execSelect(sqlIdentifier, '')
-
-    sqlFeldinhalt = "select " + feldNameSatzart + " from " + tabelleSatzart.lower() + " where runId = '" + str(auftragsIdentifier[0]['runId']) + "' and dsId = '" + str(auftragsIdentifier[0]['dsId']) + "'"
-    auftragFeldinhalt = db.execSelect(sqlFeldinhalt, '')
-    dictAuftrag = {
-        'auftragRunId': auftragsIdentifier[0]['runId'],
-        'auftragDsId': auftragsIdentifier[0]['dsId'],
-        'auftragFeldname': feldNameSatzart,
-        'auftragFeldinhalt': auftragFeldinhalt[0][feldNameSatzart]
-    }
-    print("Auftragsdaten:", dictAuftrag)
+    # auftragBereiche = feldAuftrag.split(".")
+    # tabelleSatzart = auftragBereiche[0]
+    # feldNameSatzart = auftragBereiche[1]
+    # sqlIdentifier = "select runId, dsId from sa_ft where panr = '" + context.panr + "' and prnr = '" + context.prnr + "' and voat = '" + context.voat + "' and laufendeNummerZl = '" + context.lfdNr + "'"
+    # auftragsIdentifier = db.execSelect(sqlIdentifier, '')
+    #
+    # sqlFeldinhalt = "select " + feldNameSatzart + " from " + tabelleSatzart.lower() + " where runId = '" + str(auftragsIdentifier[0]['runId']) + "' and dsId = '" + str(auftragsIdentifier[0]['dsId']) + "'"
+    # auftragFeldinhalt = db.execSelect(sqlFeldinhalt, '')
+    # dictAuftrag = {
+    #     'auftragRunId': auftragsIdentifier[0]['runId'],
+    #     'auftragDsId': auftragsIdentifier[0]['dsId'],
+    #     'auftragFeldname': feldNameSatzart,
+    #     'auftragFeldinhalt': auftragFeldinhalt[0][feldNameSatzart]
+    # }
+    # print("Auftragsdaten:", dictAuftrag)
 
     # Dokumente ermitteln und in Dicts umwandeln
     listDokumente = []
@@ -82,7 +82,9 @@ def step_verifyFelder(context, zielDb, zielFeld, feldAuftrag):
             except:
                 feldInhaltDokument = "Feld nicht vorhanden"
 
-    assert dictAuftrag['auftragFeldinhalt'].strip() == feldInhaltDokument, f'SOLL: ' + str(dictAuftrag['auftragFeldinhalt']) + ' - IST: ' + str(feldInhaltDokument)
+    if regel:
+        inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
+    assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
 
@@ -180,3 +182,10 @@ def splitZielfeld(zielFeld):
             zielFeld = zielFeld + "['" + hierarchieZielfeld + "']"
         k = k + 1
     return zielFeld
+
+def konvertierungsregel_anwenden(regel, inhaltAuftrag):
+    from datetime import datetime
+    if regel == "datum":
+        inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+    return(str(inhaltAuftrag))
+

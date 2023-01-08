@@ -7,6 +7,7 @@ import bson.json_util as json_util
 from django.core.serializers.json import DjangoJSONEncoder
 from bson.codec_options import CodecOptions
 from bson.binary import UuidRepresentation
+from base64 import b64encode, b64decode
 
 from .cls_db import cls_dbAktionen
 
@@ -16,7 +17,7 @@ class cls_readMongo():
             self.configData = json.load(json_file)
 
     def readTransaktionsId(self, panr, prnr, voat, lfdNr):
-        print(self.configData)
+   #     print(self.configData)
         connString = ""
         db = ""
         collection = ""
@@ -75,7 +76,7 @@ class cls_readMongo():
 
 
             # Speichern des Dokuments
-            print(listResults)
+       #     print(listResults)
             self.saveDocument("KUGA", listResults['_id'], listResults)
 
         self.writeTransaktionsId(statusAnliegen)
@@ -97,6 +98,7 @@ class cls_readMongo():
               "hinweis='" + str(statusAnliegen['hinweis1']) + "', " \
               "anzFehler='" + str(statusAnliegen['anzFehler']) + "', " \
               "fehler='" + str(statusAnliegen['fehler1']) + "'"
+        # print("Schreiben der TransaktionsId: ", sql, sql_valuelist)
         self.db.execSql(sql, sql_valuelist)
 
     def readApplication(self, transaktionsId, appName, nameTransaktionsId, nameSortfield):
@@ -111,6 +113,11 @@ class cls_readMongo():
         if appName in ("AAN"):
             result = connColl.find_one(
                 {nameTransaktionsId: transaktionsId},
+                 sort=[(nameSortfield, pymongo.DESCENDING)])
+        elif appName in ("PERF_IDENT", "PERF_PERS"):
+            transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
+            result = connColl.find_one(
+                {nameTransaktionsId: transaktionsIdConv},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
         else:
             result = connColl.find_one(
@@ -212,7 +219,7 @@ class cls_readMongo():
         document = json.dumps(result, cls=myEncoder, ensure_ascii=False)
         sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
         "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-        print(sql_writeDokument)
+  #      print(sql_writeDokument)
         self.db.execSql(sql_writeDokument, '')
 
     def writeStatusApp(self, appName, status, transaktionsId):

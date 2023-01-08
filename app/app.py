@@ -47,7 +47,7 @@ def uploadFile_submitted():
     if uploaded_file.filename != '':
         uploaded_file.save('uploads/' + uploaded_file.filename)
         importZa = cls_parseZa('uploads/' + uploaded_file.filename)
-    return redirect('/')
+    return redirect('/showAuftraege')
 
 
 ### Aufträge anzeigen ################################################################
@@ -81,30 +81,53 @@ def showAuftragDetails():
 
 @app.route('/readRzp')
 def readRzp():
-    runId = request.args.get('runId')
-    dsId = request.args.get('dsId')
-    dictAuftragUnique = readAuftraege.read_Auftrag_Unique(runId, dsId)
-    print(dictAuftragUnique)
-    # TransaktionsId ermitteln
-    connMongo = cls_readMongo()
-    transaktionsId = connMongo.readTransaktionsId(dictAuftragUnique[0]['panr'], dictAuftragUnique[0]['prnr'], dictAuftragUnique[0]['voat'], dictAuftragUnique[0]['lfdNr'])
-    print(transaktionsId['transaktionsId'])
+    listAuftraege = []
+    dictAuftrag = {}
+    dictAuftrag['runId'] = request.args.get('runId')
+    dictAuftrag['dsId'] = request.args.get('dsId')
+    listAuftraege.append(dictAuftrag)
+    try:
+        getAll = request.args.get('getAll')
+        if getAll == "1":
+            alleAuftraege = readAuftraege.read_Auftraege_uebersicht()
+            for auftragIds in alleAuftraege:
+                dictAuftrag['runId'] = auftragIds['runId']
+                dictAuftrag['dsId'] = auftragIds['dsId']
+                listAuftraege.append({'runId': auftragIds['runId'], 'dsId': auftragIds['dsId']})
+    except:
+        getAll = False
 
-    # Daten aus KAUS holen
-    kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
+    for auftrag in listAuftraege:
+        dictAuftragUnique = readAuftraege.read_Auftrag_Unique(str(auftrag['runId']), str(auftrag['dsId']))
+    #    print(dictAuftragUnique)
+        # TransaktionsId ermitteln
+        connMongo = cls_readMongo()
+        transaktionsId = connMongo.readTransaktionsId(dictAuftragUnique[0]['panr'], dictAuftragUnique[0]['prnr'], dictAuftragUnique[0]['voat'], dictAuftragUnique[0]['lfdNr'])
+    #    print(transaktionsId['transaktionsId'])
 
-    #AAN
-    aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", "sequenz")
-    wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", "statusHistorie")
+        # Daten aus KAUS holen
+        kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
+
+        #AAN
+        aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", "sequenz")
+        perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId.binary.base64", "_id")
+        perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId.binary.base64", "_id")
+        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", "_id")
 
     return redirect('/showAuftraege')
 
 
 @app.route('/showVergleichsreport')
 def showVergleichsreport():
-    os.system('behave features -f json.pretty -o features/reports/results.json')
-    report = open('features/reports/results.json')
-    vergleichsReport = json.load(report)
+    from classes.cls_createFeatureFiles import cls_create_featureFiles
+    # Feature-Files erzeugen und Verzeichnisse leeren
+    createFeatureFiles = cls_create_featureFiles()
+
+  #  os.system('behave features -f json.pretty -o features/reports/results.json')
+    os.system('behave -f allure_behave.formatter:AllureFormatter -o features/reports/')
+   # report = open('features/reports/results.json')
+   # vergleichsReport = json.load(report)
+    vergleichsReport = [{}]
 #    for report in vergleichsReport:
 #        for scenario in report['elements']:
 #            print("Scenario: ", scenario['keyword'], scenario['name'], scenario['status'])

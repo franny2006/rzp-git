@@ -1,19 +1,20 @@
 import io
 import os
-from cls_db import cls_dbAktionen
+from .cls_db import cls_dbAktionen
 
 class cls_create_featureFiles():
     def __init__(self):
         # Bestehende Feature-Files löschen
 
-        dir = '../features'
-        for f in os.listdir(dir):
-            try:
-                if f.split(".")[1] == 'feature':
-                    print(f)
-                    os.remove(os.path.join(dir, f))
-            except:
-                pass
+        dirsToDelete = ['features', 'features/reports']
+        for dir in dirsToDelete:
+            for f in os.listdir(dir):
+                try:
+                    if f.split(".")[1] in ('feature', 'json'):
+                        print(f)
+                        os.remove(os.path.join(dir, f))
+                except:
+                    pass
 
 
         self.db = cls_dbAktionen()
@@ -24,7 +25,14 @@ class cls_create_featureFiles():
         pass
 
     def readAuftraege(self):
-        sql = "select panr, prnr, voat, lfdNr, transaktionsId from transaktionIds where anzFehler = 0"
+       # sql = "select panr, prnr, voat, lfdNr, transaktionsId from transaktionIds where anzFehler = 0"
+        sql = "select t.panr as t_panr, t.prnr as t_prnr, t.voat as t_voat, lfdNr, transaktionsId, v.* from transaktionIds t " \
+              "left join V_DS10_komplett v " \
+              "on v.panr = t.panr " \
+              "and v.prnr = t.prnr " \
+              "and v.voat = t.voat " \
+              "and v.laufendeNummerZL = t.lfdNr " \
+              "where anzFehler = 0"
         auftraege = self.db.execSelect(sql, '')
         return auftraege
 
@@ -41,31 +49,42 @@ class cls_create_featureFiles():
 
         line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
         line.append("    When dieser Auftrag vollstaendig verarbeitet wurde")
-        line.append("    Then enthaelt in der Datenbank <zielDb> das Feld <zielFeld> den gleichen Inhalt wie <feldAuftrag>")
+        line.append("    Then enthaelt in der Datenbank <zielDb> das Feld <zielFeld> den ggf. nach Regel <regel> konvertierten Wert <inhaltAuftrag>")
 
         line.append("")
 
         line.append("    Examples:")
-        headerExampleTabelle = "    | " + str("feldAuftrag").ljust(50, ' ') + "| " + str("zielDb").ljust(50, ' ') + "| " + str("zielFeld").ljust(50, ' ') + "|"
+        headerExampleTabelle = "    | " + str("zielDb").ljust(50, ' ') + "| " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(120, ' ') + "| " + str("regel").ljust(60, ' ') + "|"
         line.append(headerExampleTabelle)
 
 
         mappingRegeln = self.readMapping()
         for regel in mappingRegeln:
-            feldAuftrag = regel['feldAuftrag'].ljust(50, ' ')
+            feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, regel['feldAuftrag']).ljust(120)
+     #       print("Feldinhalt: " + feldInhaltAuftrag)
+
             feldZielDb = regel['zielDb'].ljust(50, ' ')
-            feldZielFeld = regel['zielFeld'].ljust(50, ' ')
-            line.append("    | " + feldAuftrag + "| " + feldZielDb + "| " + feldZielFeld + "|")
+            feldZielFeld = regel['zielFeld'].ljust(60, ' ')
+            feldAuftrag = regel['feldAuftrag'].ljust(120, ' ')
+            regel = regel['regel'].ljust(50, ' ')
+            line.append("    | " + feldZielDb + "| " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + regel + "|")
 
 
 
    #     line.append("    | SA_11.zunameZUNAME                       | KUGA.Anliegen          | keyValue.zahlungsempfaengerName.zunameZUNAME          |")
    #     line.append("    | SA_11.vornameVORNAME                     | KUGA.Anliegen          | keyValue.zahlungsempfaengerName.vornameVORNAME        |")
 
-        f = io.open('../features/' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
+        f = io.open('features/' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
         for zeile in line:
             f.write(zeile + "\n")
         f.close()
+
+    def ermittle_inhaltAuftrag(self, auftrag, zielfeld):
+        listZielfeld = zielfeld.split(".")
+        feldAuftrag = listZielfeld[0].lower() + "_" + listZielfeld[1]
+        inhaltAuftrag = auftrag[feldAuftrag]
+        print(inhaltAuftrag)
+        return inhaltAuftrag
 
 if __name__ == "__main__":
     x = cls_create_featureFiles()

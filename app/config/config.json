@@ -19,6 +19,18 @@
       "collection": "anliegen"
     },
     {
+      "connectionName": "PERF_IDENT",
+      "connectionString": "mongodb://root:example@localhost:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
+      "database":  "rzp_person_perf_git",
+      "collection": "identitaeten"
+    },
+    {
+      "connectionName": "PERF_PERS",
+      "connectionString": "mongodb://root:example@localhost:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
+      "database":  "rzp_person_perf_git",
+      "collection": "personen"
+    },
+    {
       "connectionName": "KAUS",
       "connectionString": "mongodb://root:example@localhost:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
       "database":  "rzp_kunde_kaus_git",
