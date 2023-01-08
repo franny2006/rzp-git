@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid features">
+    <p></p>
+    <h3>Upload Auftragsdatei</h3>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+    <table class="table table-striped table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Lauf</th>
+            <th>lfd.Nr.</th>
+            <th>PANR</th>
+            <th>PRNR</th>
+            <th>VOAT</th>
+            <th>Auftragsdatei</th>
+            <th>TransaktionsId</th>
+            <th>Prüfergebnis</th>
+            <th>Anz Fehler</th>
+            <th>Fehlercode</th>
+            <th>Anz Hinweise</th>
+            <th>Hinweiscode</th>
+            <th>KUGA</th>
+            <th>AAN</th>
+            <th>WCH</th>
+            <th>KAUS</th>
+            <th>Details</th>
+            <th>RZP-Daten holen</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for eintrag in data %}
+
+        <tr>
+            <td>{{ eintrag['runId'] }}</td>
+            <td>{{ eintrag['laufendeNummerZL'] }}</td>
+            <td>{{ eintrag['panr'] }}</td>
+            <td>{{ eintrag['prnr'] }}</td>
+            <td>{{ eintrag['voat'] }}</td>
+            <td>{{ eintrag['datei'] }}</td>
+            <td>{{ eintrag['transaktionsId'] }}</td>
+            <td align="center">
+                {% if eintrag['pruefergebnis'] == "FEHLER" %}
+                    <button class="btn btn-danger" type="submit">
+                {% elif eintrag['pruefergebnis'] == "HINWEIS" %}
+                    <button class="btn btn-warning" type="submit">
+                {% elif eintrag['pruefergebnis'] == "OK" %}
+                    <button class="btn btn-success" type="submit">
+                {% endif %}
+                {{ eintrag['pruefergebnis'] }}
+                    </button>
+            </td>
+            <td align="center">{{ eintrag['anzFehler'] }}</td>
+            <td align="center">{{ eintrag['fehler'] }}</td>
+            <td align="center">{{ eintrag['anzHinweise'] }}</td>
+            <td align="center">{{ eintrag['hinweis'] }}</td>
+
+            {% if eintrag['kuga'] == "1" %}
+            <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KUGA&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td></td>
+            {% endif %}
+
+            {% if eintrag['aan'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+            {% elif eintrag['aan'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=AAN&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if eintrag['wch'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+            {% elif eintrag['wch'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=WCH&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if eintrag['kaus'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+            {% elif eintrag['kaus'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KAUS&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+            <td><a class="btn btn-primary" role="button" href="/showAuftragDetails?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">Auftragsdetails</a></td>
+            <td><a class="btn btn-primary" role="button" href="/readRzp?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">RZP-Daten lesen</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </form>
+</div>
+
+
+
+
+{% endblock %}

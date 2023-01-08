@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container features">
+    <p></p>
+
+
+    <table align="right">
+        <tr>
+            {% if data['statusApps']['kuga'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">KUGA</button></td>
+            {% elif data['statusApps']['kuga'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=KUGA&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=KUGA&transaktionsId={{ data['statusApps']['transaktionsId'] }}','KUGA','resizable,height=600,width=800')">KUGA</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if data['statusApps']['aan'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">AAN</button></td>
+            {% elif data['statusApps']['aan'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=AAN&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=AAN&transaktionsId={{ data['statusApps']['transaktionsId'] }}','AAN','resizable,height=600,width=800')">AAN</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if data['statusApps']['wch'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">WCH</button></td>
+            {% elif data['statusApps']['wch'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=WCH&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=WCH&transaktionsId={{ data['statusApps']['transaktionsId'] }}','WCH','resizable,height=600,width=800')">WCH</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if data['statusApps']['kaus'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">KAUS</button></td>
+            {% elif data['statusApps']['kaus'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button"
+                                      href="/readDocument?herkunft=KAUS&transaktionsId={{ data['statusApps']['transaktionsId'] }}"
+                                      target="_blank"
+                                      onClick="window.open('/readDocument?herkunft=KAUS&transaktionsId={{ data['statusApps']['transaktionsId'] }}','KAUS','resizable,height=600,width=800')">KAUS</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+        </tr>
+    </table>
+
+    <h3>Auftragsdetails</h3>
+
+    {% for bereich, bereichsdetails in data['auftragZa'].items() %}
+
+        <h4>{{ bereich }}</h4>
+
+
+        <table class="table table-striped table-bordered table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th class="text-center" width="10%">Satzart</th>
+                <th class="text-center" width="36%">Feldname</th>
+                <th class="text-center" width="54%">Feldinhalt</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sa, sadetails in bereichsdetails.items() %}
+            <tr>
+                <td class="table-primary" width="10%" ><b>{{ sa }}</b></td>
+                <td width="90%" colspan="2">
+                    <table class="table table-striped table-bordered table-hover">
+                        {% for feldname, feldinhalt in sadetails.items() %}
+                        <tr>
+                            <td width="40%">{{ feldname }}</td>
+                            <td width="60%">{{ feldinhalt }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% endfor %}
+</div>
+
+
+
+
+{% endblock %}

@@ -1,0 +1,31 @@
+version: "3.1"
+services:
+  app-gui:
+    build: ./app
+    depends_on:
+      - db
+    ports:
+      - "5010:5000"
+    container_name: rzp-cockpit
+  db:
+    image: mariadb
+    container_name: rzp-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MARIADB_USER: root
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:rw
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: rzp-phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "5011:80"
+    depends_on:
+      - db
