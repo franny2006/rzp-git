@@ -77,7 +77,7 @@ class cls_readMongo():
 
             # Speichern des Dokuments
        #     print(listResults)
-            self.saveDocument("KUGA", listResults['_id'], listResults)
+            self.saveDocument("KUGA", listResults['_id'], None, None, None, listResults)
 
         self.writeTransaktionsId(statusAnliegen)
         # Speichern der TransaktionsId
@@ -101,7 +101,42 @@ class cls_readMongo():
         # print("Schreiben der TransaktionsId: ", sql, sql_valuelist)
         self.db.execSql(sql, sql_valuelist)
 
-    def readApplication(self, transaktionsId, appName, nameTransaktionsId, nameSortfield):
+    def readRollenIds(self, transaktionsId):
+        rollen = ['RZP_BERECHTIGTER', 'RZP_ZAHLUNGSEMPFAENGER', 'RZP_MITTEILUNGSEMPFAENGER', 'RZP_KONTOINHABER']
+        connInfos = self.readConnectionInfos('PERF_IDENT')
+        connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
+        opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
+        connDb = connClient[connInfos['db']]
+        connColl = connDb[connInfos['collection']]
+        transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
+        rollenList = []
+        for rolle in rollen:
+            listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
+            if listResult:
+                identitaetenId = listResult['identitaetenId']['binary']['base64']
+                personId = listResult['personId']['binary']['base64']
+                if rolle == "RZP_BERECHTIGTER":
+                    postfix = "be"
+                elif rolle == "RZP_ZAHLUNGSEMPFAENGER":
+                    postfix = "ze"
+                elif rolle == "RZP_MITTEILUNGSEMPFAENGER":
+                    postfix = "me"
+                elif rolle == "RZP_KONTOINHABER":
+                    postfix = "ki"
+                sqlUpdateRollen = "update transaktionIds set identitaetenId_" + str(postfix) + " = '" + str(identitaetenId) + "', personId_" + str(postfix) + " = '" + str(personId) + "'"
+                self.db.execSql(sqlUpdateRollen, '')
+                rolleDict = {
+                    'rolle': postfix,
+                    'identitaetenId': str(identitaetenId),
+                    'personId': str(personId)
+                }
+                rollenList.append(rolleDict)
+
+        return rollenList
+
+
+
+    def readApplication(self, transaktionsId, appName, nameTransaktionsId, rolle, nameId2, id2, nameSortfield):
         connInfos = self.readConnectionInfos(appName)
 
         connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
@@ -117,7 +152,8 @@ class cls_readMongo():
         elif appName in ("PERF_IDENT", "PERF_PERS"):
             transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
             result = connColl.find_one(
-                {nameTransaktionsId: transaktionsIdConv},
+                {nameTransaktionsId: transaktionsIdConv,
+                 nameId2: id2},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
         else:
             result = connColl.find_one(
@@ -126,7 +162,7 @@ class cls_readMongo():
 
         if result:
             # Speichern des Dokuments
-            self.saveDocument(appName, transaktionsId, result)
+            self.saveDocument(appName, transaktionsId, rolle, nameId2, id2, result)
 
             # Speichern des Status, wenn Transaktion in KAUS gefunden wurde
             self.writeStatusApp(appName, "1", transaktionsId)
@@ -153,7 +189,7 @@ class cls_readMongo():
             self.writeKaus(transaktionsId, result)
 
             # Speichern des Dokuments
-            self.saveDocument("KAUS", transaktionsId, result)
+            self.saveDocument("KAUS", transaktionsId, None, None, None, result)
         else:
             self.writeStatusApp("KAUS", "2", transaktionsId)
 
@@ -213,19 +249,28 @@ class cls_readMongo():
 
             #    self.db.execSql(sql, sql_valuelist)
 
-    def saveDocument(self, herkunft, transaktionsId, result):
+    def saveDocument(self, herkunft, transaktionsId, rolle, nameId2, id2, result):
         # Speichern des Dokuments
         self.db = cls_dbAktionen()
         document = json.dumps(result, cls=myEncoder, ensure_ascii=False)
-        sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
-        "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-  #      print(sql_writeDokument)
+        if nameId2 is None:
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
+            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+        else:
+            if herkunft == "PERF_IDENT":
+                art = "identitaetenId"
+            elif herkunft == "PERF_PERS":
+                art = "personId"
+
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
+            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+        print(sql_writeDokument)
         self.db.execSql(sql_writeDokument, '')
 
     def writeStatusApp(self, appName, status, transaktionsId):
         self.db = cls_dbAktionen()
         sql = "update transaktionIds set " + str(appName).lower() + " = '" + status + "' where transaktionsId = '" + transaktionsId + "'"
-        print("Update Status", sql)
+     #   print("Update Status", sql)
         self.db.execSql(sql, '')
 
 

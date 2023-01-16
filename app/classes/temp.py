@@ -3,6 +3,7 @@ import uuid
 from base64 import b64encode, b64decode
 
 strUuid = "33f7858a-53fe-482f-8527-d8c28c632b3a"
+strUuid = "A89A85FD-F7B5-47F2-B3CD-7026B476F8A1"
 strKonvertiert = "M/eFilP+SC+FJ9jCjGMrOg=="
 
 print(base64.b64encode(b'strUuid'))
@@ -36,6 +37,9 @@ connColl = connDb[coll]
 uuidConv = b64encode(uuid.UUID(strUuid).bytes).decode()
 print(uuidConv)
 result = connColl.find_one({'transaktionsId.binary.base64': uuidConv})
+print(result)
+
+result = connColl.find_one({'personId.binary.base64': uuidConv})
 print(result)
 
 

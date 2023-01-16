@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container features">
+    <p></p>
+    <h3>Verbindungsübersicht</h3>
+
+    <table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>Connection</th>
+            <th>Connection String</th>
+            <th>Connection testen</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for connection in data %}
+        <tr>
+            <td>{{ connection['connectionName'] }}</td>
+            <td>{{ connection['connectionString'] }}</td>
+            <td><a href="/checkConnection?nameConn={{ connection['connectionName'] }}">Connection testen</a></td>
+        </tr>
+    {% endfor %}
+
+    </tbody>
+
+
+    </table>
+</div>
+
+
+
+
+{% endblock %}

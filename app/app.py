@@ -19,6 +19,14 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 readAuftraege = cls_readAuftraege()
 
+try:
+    with open('c:/temp/mongo-poc/config.json') as json_file:
+        data = json.load(json_file)
+except:
+    with open('config/config.json') as json_file:
+        data = json.load(json_file)
+listConnections = []
+
 
 @app.route('/', methods=['GET'])
 def home():
@@ -54,6 +62,7 @@ def uploadFile_submitted():
 @app.route('/showAuftraege')
 def showOrders():
     dictAuftraege = readAuftraege.read_Auftraege_uebersicht()
+
     return render_template('showAuftraege.html', title="Auftragsübersicht", data=dictAuftraege)
 
 @app.route('/readDocument')
@@ -99,20 +108,43 @@ def readRzp():
 
     for auftrag in listAuftraege:
         dictAuftragUnique = readAuftraege.read_Auftrag_Unique(str(auftrag['runId']), str(auftrag['dsId']))
-    #    print(dictAuftragUnique)
+
         # TransaktionsId ermitteln
         connMongo = cls_readMongo()
         transaktionsId = connMongo.readTransaktionsId(dictAuftragUnique[0]['panr'], dictAuftragUnique[0]['prnr'], dictAuftragUnique[0]['voat'], dictAuftragUnique[0]['lfdNr'])
-    #    print(transaktionsId['transaktionsId'])
+
+        # Identitaeten- und PersonenIds für alle Rollen ermitteln
+        identitaeten_personen_ids = connMongo.readRollenIds(transaktionsId['transaktionsId'])
+     #   print(identitaeten_personen_ids)
 
         # Daten aus KAUS holen
         kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
 
         #AAN
-        aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", "sequenz")
-        perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId.binary.base64", "_id")
-        perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId.binary.base64", "_id")
-        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", "_id")
+        aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", None, None, None, "sequenz")
+
+        # Identität und Person pro Rolle
+        for rolle in identitaeten_personen_ids:
+            if rolle['rolle'] == "ze":
+                rolle_postfix = "ze"
+                idIdentBez = "identitaetenId_ze"
+                idPersonBez = "personId_ze"
+            elif rolle['rolle'] == "be":
+                rolle_postfix = "be"
+                idIdentBez = "identitaetenId_be"
+                idPersonBez = "personId_be"
+            elif rolle['rolle'] == "me":
+                rolle_postfix = "me"
+                idIdentBez = "identitaetenId_me"
+                idPersonBez = "personId_me"
+            elif rolle['rolle'] == "ki":
+                rolle_postfix = "ki"
+                idIdentBez = "identitaetenId_ki"
+                idPersonBez = "personId_ki"
+
+            perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId.binary.base64", rolle['rolle'], "identitaetenId.binary.base64", rolle['identitaetenId'], "_id")
+            perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId.binary.base64", rolle['rolle'], "personId.binary.base64", rolle['personId'], "_id")
+        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
 
     return redirect('/showAuftraege')
 
@@ -123,11 +155,11 @@ def showVergleichsreport():
     # Feature-Files erzeugen und Verzeichnisse leeren
     createFeatureFiles = cls_create_featureFiles()
 
-  #  os.system('behave features -f json.pretty -o features/reports/results.json')
+    os.system('behave features -f json.pretty -o features/reports/results.json')
     os.system('behave -f allure_behave.formatter:AllureFormatter -o features/reports/')
-   # report = open('features/reports/results.json')
-   # vergleichsReport = json.load(report)
-    vergleichsReport = [{}]
+    report = open('features/reports/results.json')
+    vergleichsReport = json.load(report)
+#    vergleichsReport = [{}]
 #    for report in vergleichsReport:
 #        for scenario in report['elements']:
 #            print("Scenario: ", scenario['keyword'], scenario['name'], scenario['status'])
@@ -140,7 +172,21 @@ def showVergleichsreport():
 
     return render_template('showVergleichsreport.html', title="Vergleichsreport", data=json.dumps(vergleichsReport, sort_keys = False, indent = 4, ensure_ascii=False))
 
+@app.route('/viewConnections', methods=['GET', 'POST'])
+def viewConnections():
+    listConnections = []
+    print("Conn in View:", listConnections)
+    return render_template('viewConnections.html', title="Verbindungsübersicht", data=data['connection'])
 
+@app.route('/checkConnection', methods=['GET', 'POST'])
+def checkConnection():
+
+    nameConnToCheck = request.args.get('nameConn')
+    for connection in data['connection']:
+        if connection['connectionName'] == nameConnToCheck:
+            client = MongoClient(connection['connectionString'])
+            response = client.server_info()
+    return render_template('viewConnectionTestResult.html', title="Test der Verbindung", data=response)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

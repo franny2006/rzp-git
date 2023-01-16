@@ -20,7 +20,8 @@ class cls_create_featureFiles():
         self.db = cls_dbAktionen()
         auftraege = self.readAuftraege()
         for dictAuftrag in auftraege:
-            self.createFile(dictAuftrag)
+            self.createFile_standard(dictAuftrag)
+            self.createFile_rollen(dictAuftrag)
     #    self.createFile()
         pass
 
@@ -36,15 +37,18 @@ class cls_create_featureFiles():
         auftraege = self.db.execSelect(sql, '')
         return auftraege
 
-    def readMapping(self):
-        sql = "select * from gherkin_mapping"
+    def readMapping(self, art):
+        if art == "standard":
+            sql = "select * from gherkin_mapping where rolle is Null"
+        elif art == "rollen":
+            sql = "select * from gherkin_mapping where rolle is not Null"
         mappings = self.db.execSelect(sql, '')
         return mappings
 
-    def createFile(self, dictAuftrag):
+    def createFile_standard(self, dictAuftrag):
         line = []
-        line.append("Feature: Pruefe Adresse - Transaktion: " + str(dictAuftrag['transaktionsId']))
-        line.append("  Scenario Outline: Adressen pruefen SZ")
+        line.append("Feature: Pruefe Einzelfelder: " + str(dictAuftrag['transaktionsId']))
+        line.append("  Scenario Outline: Einzelne Felder pruefen")
 
 
         line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
@@ -58,23 +62,48 @@ class cls_create_featureFiles():
         line.append(headerExampleTabelle)
 
 
-        mappingRegeln = self.readMapping()
+        mappingRegeln = self.readMapping("standard")
         for regel in mappingRegeln:
             feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, regel['feldAuftrag']).ljust(120)
-     #       print("Feldinhalt: " + feldInhaltAuftrag)
 
             feldZielDb = regel['zielDb'].ljust(50, ' ')
             feldZielFeld = regel['zielFeld'].ljust(60, ' ')
-            feldAuftrag = regel['feldAuftrag'].ljust(120, ' ')
             regel = regel['regel'].ljust(50, ' ')
             line.append("    | " + feldZielDb + "| " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + regel + "|")
 
 
+        f = io.open('features/standard_' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
+        for zeile in line:
+            f.write(zeile + "\n")
+        f.close()
 
-   #     line.append("    | SA_11.zunameZUNAME                       | KUGA.Anliegen          | keyValue.zahlungsempfaengerName.zunameZUNAME          |")
-   #     line.append("    | SA_11.vornameVORNAME                     | KUGA.Anliegen          | keyValue.zahlungsempfaengerName.vornameVORNAME        |")
+    def createFile_rollen(self, dictAuftrag):
+        line = []
+        line.append("Feature: Pruefe Rollen - Transaktion: " + str(dictAuftrag['transaktionsId']))
+        line.append("  Scenario Outline: Rollen pruefen")
 
-        f = io.open('features/' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
+        line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
+        line.append("    When dieser Auftrag vollstaendig verarbeitet wurde")
+        line.append("    Then enthaelt zur Rolle <rolle> in der Datenbank <zielDb> das Feld <zielFeld> den ggf. nach Regel <regel> konvertierten Wert <inhaltAuftrag>")
+
+        line.append("")
+
+        line.append("    Examples:")
+        headerExampleTabelle = "    | " + str("inhaltAuftrag").ljust(120, ' ') + "| " + str("zielDb").ljust(50, ' ') + "| " + str("rolle").ljust(6, ' ') + "| " + str("zielFeld").ljust(60, ' ') + "| " + str("regel").ljust(60, ' ') + "|"
+        line.append(headerExampleTabelle)
+
+        mappingRegeln = self.readMapping("rollen")
+        for regel in mappingRegeln:
+            feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, regel['feldAuftrag']).ljust(120)
+            #       print("Feldinhalt: " + feldInhaltAuftrag)
+
+            feldZielDb = regel['zielDb'].ljust(50, ' ')
+            feldZielFeld = regel['zielFeld'].ljust(60, ' ')
+            rolle = regel['rolle'].ljust(6, ' ')
+            regel = regel['regel'].ljust(50, ' ')
+            line.append("    | " + feldInhaltAuftrag + "| " + feldZielDb + "| " + rolle + "| " + feldZielFeld + "| " + regel + "|")
+
+        f = io.open('features/rollen_' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
         for zeile in line:
             f.write(zeile + "\n")
         f.close()

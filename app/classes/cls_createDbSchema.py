@@ -16,6 +16,7 @@ class cls_createSchema():
         self.createTables()
         self.createView()
         self.createTableGherkin_Mappings()
+        self.createTableSchluessel()
 
 
 
@@ -30,7 +31,9 @@ class cls_createSchema():
         self.db.execSql(sql, '')
         sql = "CREATE TABLE IF NOT EXISTS transaktionIds " \
               "(panr varchar(4), prnr varchar(14), voat varchar(2), lfdNr varchar(8), " \
-              "transaktionsId varchar(36), pruefergebnis varchar(50), anzHinweise varchar(5), hinweis varchar(5), anzFehler varchar(5), fehler varchar(5), " \
+              "transaktionsId varchar(36), identitaetenId_ze varchar(36), personId_ze varchar(36), identitaetenId_be varchar(36), personId_be varchar(36), " \
+              "identitaetenId_me varchar(36), personId_me varchar(36), identitaetenId_ki varchar(36), personId_ki varchar(36), " \
+              "pruefergebnis varchar(50), anzHinweise varchar(5), hinweis varchar(5), anzFehler varchar(5), fehler varchar(5), " \
               "kuga char(1), aan char(1), wch char(1), perf_ident char(1), perf_pers char(1), kaus char(1), " \
               "ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " \
               "PRIMARY KEY (panr, prnr, voat, lfdNr))"
@@ -40,9 +43,10 @@ class cls_createSchema():
         sql = "drop table if exists documents"
         self.db.execSql(sql, '')
         sql = "CREATE TABLE documents (herkunft varchar(100) CHARACTER SET utf8mb4 NOT NULL," \
-              "transaktionsId varchar(36) CHARACTER SET utf8mb4 NOT NULL, " \
+              "transaktionsId varchar(36) CHARACTER SET utf8mb4 NOT NULL, rolle char(2) DEFAULT '' not null, identitaetenId varchar(36) DEFAULT '' not null, personId varchar(36) DEFAULT '' not null, " \
               "document JSON NOT NULL, " \
-              "ts timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()) " \
+              "ts timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()," \
+              "PRIMARY KEY (transaktionsId, herkunft, rolle, identitaetenId, personId)) " \
               "ENGINE=InnoDB DEFAULT CHARSET=latin1;"
         self.db.execSql(sql, '')
 
@@ -58,7 +62,7 @@ class cls_createSchema():
     def createTableGherkin_Mappings(self):
         sql = "drop table if exists gherkin_mapping"
         self.db.execSql(sql, '')
-        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), rolle char(2), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
         self.db.execSql(sql, '')
         sqlInsertList = ["insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.zunameZUNAME', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.vornameVORNAME', '-')",
@@ -66,6 +70,8 @@ class cls_createSchema():
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerAdresse.hausnummerHAUSNR', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.plzPLZ', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.ortOT', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.anredeschluesselANREDSC', 'KAUS.Kundeninformation', 'berechtigter.name.anrede', 'ps_anrede')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.barrierefreieKommunikationMMBARKO', 'KAUS.Kundeninformation', 'berechtigter.kommunikationsmerkmal', 'ps_mmbarko')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KAUS.Kundeninformation', 'berechtigter.name.nachname', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KAUS.Kundeninformation', 'berechtigter.name.vorname', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.strasseZahlungsempfaengerSE', 'KAUS.Kundeninformation', 'berechtigter.adresse.strasse', '-')",
@@ -74,7 +80,34 @@ class cls_createSchema():
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KAUS.Kundeninformation', 'berechtigter.adresse.ort', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.panr', 'KAUS.Kundeninformation', 'geldleistung.postabrechnungsnummer', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.prnr', 'KAUS.Kundeninformation', 'geldleistung.postrentennummer', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_12.geburtsdatumBerechtigterGBDTBC', 'KAUS.Kundeninformation', 'berechtigter.geburtsdatum', 'datum')"]
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_12.geburtsdatumBerechtigterGBDTBC', 'KAUS.Kundeninformation', 'berechtigter.geburtsdatum', 'datum')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.zunameZUNAME', 'PERF_PERS.personen', 'name.nachname', 'ze', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.vornameVORNAME', 'PERF_PERS.personen', 'name.vorname', 'ze', '-')"]
+        for sqlInsert in sqlInsertList:
+           # print(sqlInsert)
+            self.db.execSql(sqlInsert, '')
+
+    def createTableSchluessel(self):
+        sql = "drop table if exists schluessel"
+        self.db.execSql(sql, '')
+        sql = "CREATE TABLE IF NOT EXISTS schluessel " \
+              "(id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(100), keyAuftrag varchar(100), keyRzp varchar(100), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+
+        self.db.execSql(sql, '')
+        sqlInsertList = ["insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '1', 'Herr')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '2', 'Frau')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '3', 'Fräulein')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '4', 'Damen und Herren')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '5', 'Herren')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '6', 'Damen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '7', 'Guten Tag')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '00', 'Grundstellung_Normaldruck')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '01', 'Großdruck')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '02', 'Braille_Kurzschrift')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '03', 'Braille_Langschrift')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '12', 'Bereitstellung als E-Mail')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '13', 'CD-ROM_Schriftdatei')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '22', 'Hörmedium_CD-ROM_DAISY')"]
         for sqlInsert in sqlInsertList:
            # print(sqlInsert)
             self.db.execSql(sqlInsert, '')

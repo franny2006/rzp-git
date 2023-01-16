@@ -37,24 +37,6 @@ def step_verarbeitungPruefen(context):
 
 @then("enthaelt in der Datenbank {zielDb} das Feld {zielFeld} den ggf. nach Regel {regel} konvertierten Wert {inhaltAuftrag}")
 def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
-    # Auftragdaten ermitteln
-    # DS-ID ermitteln
-    # auftragBereiche = feldAuftrag.split(".")
-    # tabelleSatzart = auftragBereiche[0]
-    # feldNameSatzart = auftragBereiche[1]
-    # sqlIdentifier = "select runId, dsId from sa_ft where panr = '" + context.panr + "' and prnr = '" + context.prnr + "' and voat = '" + context.voat + "' and laufendeNummerZl = '" + context.lfdNr + "'"
-    # auftragsIdentifier = db.execSelect(sqlIdentifier, '')
-    #
-    # sqlFeldinhalt = "select " + feldNameSatzart + " from " + tabelleSatzart.lower() + " where runId = '" + str(auftragsIdentifier[0]['runId']) + "' and dsId = '" + str(auftragsIdentifier[0]['dsId']) + "'"
-    # auftragFeldinhalt = db.execSelect(sqlFeldinhalt, '')
-    # dictAuftrag = {
-    #     'auftragRunId': auftragsIdentifier[0]['runId'],
-    #     'auftragDsId': auftragsIdentifier[0]['dsId'],
-    #     'auftragFeldname': feldNameSatzart,
-    #     'auftragFeldinhalt': auftragFeldinhalt[0][feldNameSatzart]
-    # }
-    # print("Auftragsdaten:", dictAuftrag)
-
     # Dokumente ermitteln und in Dicts umwandeln
     listDokumente = []
     for app in rzpDatenbanken:
@@ -87,6 +69,39 @@ def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
     assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
+@then("enthaelt zur Rolle {rolle} in der Datenbank {zielDb} das Feld {zielFeld} den ggf. nach Regel {regel} konvertierten Wert {inhaltAuftrag}")
+def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, regel, inhaltAuftrag):
+    # Dokumente ermitteln und in Dicts umwandeln
+    listDokumente = []
+    for app in rzpDatenbanken:
+        sql = "select document from documents where transaktionsId = '" + context.transaktionsId + "' and herkunft = '" + app + "' and rolle = '" + rolle.lower() + "'"
+        print(sql)
+        resultDokument = db.execSelect(sql, '')
+        dokument = {}
+        dokument['herkunft'] = app
+        try:
+            dokument['dokument'] = resultDokument[0]['document'].decode()
+        except:
+            dokument['dokument'] = "{}"
+        listDokumente.append(dokument)
+    print("Dokumente: ", listDokumente)
+
+    # Vergleich der Inhalte aus Auftragsdaten und Dokumenten-Dict
+    zielDb = zielDb.split(".")[0]
+    zielFeldDict = splitZielfeld(zielFeld)
+
+    for dokument in listDokumente:
+        if dokument['herkunft'] == zielDb:
+            dictDokument = json.loads(dokument['dokument'])
+     #       print(dictDokument)
+            try:
+                feldInhaltDokument = eval(zielFeldDict)
+            except:
+                feldInhaltDokument = "Feld nicht vorhanden"
+
+    if regel:
+        inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
+    assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
 
@@ -187,5 +202,12 @@ def konvertierungsregel_anwenden(regel, inhaltAuftrag):
     from datetime import datetime
     if regel == "datum":
         inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+    elif regel[:3].lower() == 'ps_':
+        feldAuftrag = regel[3:]
+        sql = "select distinct keyRzp from schluessel where feldAuftrag = '" + str(feldAuftrag) + "' and keyAuftrag = '" + str(inhaltAuftrag) + "'"
+        valueZiel = db.execSelect(sql, '')
+        inhaltAuftrag = valueZiel[0]['keyRzp'].upper()
+        print(inhaltAuftrag)
+
     return(str(inhaltAuftrag))
 

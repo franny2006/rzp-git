@@ -19,8 +19,11 @@
             <th>PANR</th>
             <th>PRNR</th>
             <th>VOAT</th>
+            <th>ZE</th>
+            <th>BE</th>
+            <th>ME</th>
             <th>Auftragsdatei</th>
-            <th>TransaktionsId</th>
+            <th>RZP-IDs</th>
             <th>Prüfergebnis</th>
             <th>Anz Fehler</th>
             <th>Fehlercode</th>
@@ -42,11 +45,25 @@
         <tr>
             <td>{{ eintrag['runId'] }}</td>
             <td>{{ eintrag['laufendeNummerZL'] }}</td>
-            <td>{{ eintrag['panr'] }}</td>
-            <td>{{ eintrag['prnr'] }}</td>
-            <td>{{ eintrag['voat'] }}</td>
+            <td>{{ eintrag['za_panr'] }}</td>
+            <td>{{ eintrag['za_prnr'] }}</td>
+            <td>{{ eintrag['za_voat'] }}</td>
+            <td>{{ eintrag['rolleZe'] }}</td>
+            <td>{{ eintrag['rolleBe'] }}</td>
+            <td>{{ eintrag['rolleMe'] }}</td>
             <td>{{ eintrag['datei'] }}</td>
-            <td>{{ eintrag['transaktionsId'] }}</td>
+            <td>
+                <center><button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#transaktionId" aria-expanded="false" aria-controls="transaktionId">ID</button></center>
+                <div class="collapse" id="transaktionId"><div class="card card-body" style="white-space: nowrap;">
+                    <ul>
+                        <li>TransaktionsId: {{ eintrag['transaktionsId'] }}</li>
+                        <li>IdentitaetenId ZE: {{ eintrag['identitaetenId_ze'] }}</li>
+                        <li>IdentitaetenId BE: {{ eintrag['identitaetenId_be'] }}</li>
+                        <li>IdentitaetenId ME: {{ eintrag['identitaetenId_me'] }}</li>
+                        <li>IdentitaetenId KI: {{ eintrag['identitaetenId_ki'] }}</li>
+                    </ul>
+                </div></div>
+            </td>
             <td align="center">
                 {% if eintrag['pruefergebnis'] == "FEHLER" %}
                     <button class="btn btn-danger" type="submit">
@@ -109,7 +126,7 @@
                 <td align="center"></td>
             {% endif %}
             <td><a class="btn btn-primary" role="button" href="/showAuftragDetails?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">Auftragsdetails</a></td>
-            <td><a class="btn btn-primary" role="button" href="/readRzp?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">RZP-Daten lesen</a></td>
+            <td><a class="btn btn-primary" role="button" href="/readRzp?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">RZP-Daten</a></td>
         </tr>
         {% endfor %}
         </tbody>
