@@ -122,6 +122,9 @@ def readRzp():
 
         #AAN
         aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", None, None, None, "sequenz")
+        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
+        refue = connMongo.readApplication(transaktionsId['transaktionsId'], "REFUE", "transaktionsId", None, None, None, "_id")
+        reza = connMongo.readApplication(transaktionsId['transaktionsId'], "REZA", "transaktionsId", None, None, None, "_id")
 
         # Identität und Person pro Rolle
         for rolle in identitaeten_personen_ids:
@@ -144,7 +147,7 @@ def readRzp():
 
             perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId.binary.base64", rolle['rolle'], "identitaetenId.binary.base64", rolle['identitaetenId'], "_id")
             perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId.binary.base64", rolle['rolle'], "personId.binary.base64", rolle['personId'], "_id")
-        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
+
 
     return redirect('/showAuftraege')
 
@@ -155,9 +158,10 @@ def showVergleichsreport():
     # Feature-Files erzeugen und Verzeichnisse leeren
     createFeatureFiles = cls_create_featureFiles()
 
-    os.system('behave features -f json.pretty -o features/reports/results.json')
-    os.system('behave -f allure_behave.formatter:AllureFormatter -o features/reports/')
-    report = open('features/reports/results.json')
+    os.system('behave features -f json.pretty -o export/reports/results.json')
+    os.system('behave -f allure_behave.formatter:AllureFormatter -o export/allure-results/')
+ #   os.system('behave -f allure_behave.formatter:AllureFormatter -o ./allure-results')
+    report = open('export/reports/results.json')
     vergleichsReport = json.load(report)
 #    vergleichsReport = [{}]
 #    for report in vergleichsReport:

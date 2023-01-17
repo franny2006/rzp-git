@@ -6,7 +6,7 @@ class cls_create_featureFiles():
     def __init__(self):
         # Bestehende Feature-Files löschen
 
-        dirsToDelete = ['features', 'features/reports']
+        dirsToDelete = ['features', 'export', 'export/reports', 'export/allure-results']
         for dir in dirsToDelete:
             for f in os.listdir(dir):
                 try:

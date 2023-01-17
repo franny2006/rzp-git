@@ -21,6 +21,8 @@ COPY app.py /app
 COPY /classes classes/
 COPY /templates templates/
 COPY /config config/
+COPY /export export/
+COPY /features features/
 COPY /uploads uploads/
 
 CMD python app.py

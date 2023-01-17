@@ -155,7 +155,7 @@ class cls_readMongo():
                 {nameTransaktionsId: transaktionsIdConv,
                  nameId2: id2},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
-        else:
+        else:                                                       # KAUS, WCH, REZA
             result = connColl.find_one(
                 {nameTransaktionsId: UUID(transaktionsId)},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
@@ -264,7 +264,7 @@ class cls_readMongo():
 
             sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
             "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-        print(sql_writeDokument)
+    #    print(sql_writeDokument)
         self.db.execSql(sql_writeDokument, '')
 
     def writeStatusApp(self, appName, status, transaktionsId):

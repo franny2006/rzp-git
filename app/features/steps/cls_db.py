@@ -9,6 +9,7 @@ from configparser import ConfigParser
 class cls_dbAktionen():
     def __init__(self, zieldb=None):
         self.mydb = mysql.connector.connect(host="localhost", user="root", password="root", database="rzp_git")
+    #    self.mydb = mysql.connector.connect(host="rzp-mysql", user="root", password="root", database="rzp_git")
 
     def execSql(self, statement, val):
         mycursor = self.mydb.cursor()

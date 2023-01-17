@@ -34,6 +34,8 @@
             <th>WCH</th>
             <th>PERF-I</th>
             <th>PERF-P</th>
+            <th>REFUE</th>
+            <th>REZA</th>
             <th>KAUS</th>
             <th>Details</th>
             <th>RZP-Daten holen</th>
@@ -114,6 +116,22 @@
                 <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
             {% elif eintrag['perf_pers'] == "1" %}
                 <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_PERS&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if eintrag['refue'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+            {% elif eintrag['refue'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REFUE&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if eintrag['reza'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+            {% elif eintrag['reza'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REZA&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}

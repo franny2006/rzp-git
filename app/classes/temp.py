@@ -47,3 +47,21 @@ from datetime import datetime
 datum = '20111230'
 datumF = datetime.strptime(datum, '%Y%m%d').date()
 print(str(datumF))
+
+
+connString='mongodb://root:example@localhost:27017/?authSource=admin&authMechanism=SCRAM-SHA-256'
+db = 'rzp_rente_reza_git'
+coll = 'geldleistungskonten'
+connClient = MongoClient(connString, uuidRepresentation="standard")
+connDb = connClient[db]
+connColl = connDb[coll]
+uuidConv = b64encode(uuid.UUID(strUuid).bytes).decode()
+print(uuidConv)
+cursor = connColl.find({})
+for document in cursor:
+    print(document)
+result = connColl.find({})
+for r in result:
+    print("...", r)
+#result = connColl.find_one({'transaktionsId': uuid.UUID("d620d31b-a922-40f2-bf76-aaa668148e7d")})
+print("Warum???", result)

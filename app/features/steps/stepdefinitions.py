@@ -3,7 +3,7 @@ import json
 from cls_db import cls_dbAktionen
 
 db = cls_dbAktionen()
-rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS']
+rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA']
 
 @given('Es wurde eine Auftragsdatei eingespielt')
 def step_init(context):
@@ -56,6 +56,7 @@ def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
     zielFeldDict = splitZielfeld(zielFeld)
 
     for dokument in listDokumente:
+
         if dokument['herkunft'] == zielDb:
             dictDokument = json.loads(dokument['dokument'])
      #       print(dictDokument)
@@ -64,8 +65,10 @@ def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
             except:
                 feldInhaltDokument = "Feld nicht vorhanden"
 
+
     if regel:
         inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
+    inhaltAuftrag = inhaltAuftrag.lstrip("0")
     assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
@@ -101,6 +104,8 @@ def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, regel, inhaltAuftr
 
     if regel:
         inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
+
+    inhaltAuftrag = inhaltAuftrag.lstrip("0")
     assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
@@ -148,6 +153,8 @@ def step_verifyFeld_alt(context, zielDb, zielFeld, feldAuftrag):
     for transaktion in context.listTransaktionen:
    #     print("************************************************* Start **************************************")
    #     print(transaktion['auftragsdaten'])
+        feldInhaltAuftrag = "nicht initialisiert"
+
         dokumente = {}
         for dictDokument in transaktion['dokumente']:
             dokumente[dictDokument['herkunft']] = json.loads(dictDokument['dokument'])
@@ -168,6 +175,7 @@ def step_verifyFeld_alt(context, zielDb, zielFeld, feldAuftrag):
 
         for feldDatenAuftrag in transaktion['auftragsdaten']:
     #        print("zu prüfen 2: ", feldAuftrag, feldDatenAuftrag)
+            feldInhaltDokument = "Zielfeld konnte nicht gefunden werden"
             for feld in feldDatenAuftrag.values():
                 if feldAuftrag == feld:
                     feldInhaltAuftrag = feldDatenAuftrag['auftragFeldinhalt']
@@ -202,11 +210,17 @@ def konvertierungsregel_anwenden(regel, inhaltAuftrag):
     from datetime import datetime
     if regel == "datum":
         inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+    elif regel.lower() == "datum_yyyymm":
+        dataTemp = datetime.strptime(inhaltAuftrag, '%Y%m').date()
+        inhaltAuftrag = dataTemp.strftime('%Y-%m')
     elif regel[:3].lower() == 'ps_':
         feldAuftrag = regel[3:]
         sql = "select distinct keyRzp from schluessel where feldAuftrag = '" + str(feldAuftrag) + "' and keyAuftrag = '" + str(inhaltAuftrag) + "'"
         valueZiel = db.execSelect(sql, '')
-        inhaltAuftrag = valueZiel[0]['keyRzp'].upper()
+        try:
+            inhaltAuftrag = valueZiel[0]['keyRzp'].upper()
+        except:
+            inhaltAuftrag = "kein Mapping vorhanden für Wert " + str(inhaltAuftrag) + " in Feld " + str(feldAuftrag)
         print(inhaltAuftrag)
 
     return(str(inhaltAuftrag))

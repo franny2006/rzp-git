@@ -34,7 +34,7 @@ class cls_createSchema():
               "transaktionsId varchar(36), identitaetenId_ze varchar(36), personId_ze varchar(36), identitaetenId_be varchar(36), personId_be varchar(36), " \
               "identitaetenId_me varchar(36), personId_me varchar(36), identitaetenId_ki varchar(36), personId_ki varchar(36), " \
               "pruefergebnis varchar(50), anzHinweise varchar(5), hinweis varchar(5), anzFehler varchar(5), fehler varchar(5), " \
-              "kuga char(1), aan char(1), wch char(1), perf_ident char(1), perf_pers char(1), kaus char(1), " \
+              "kuga char(1), aan char(1), wch char(1), perf_ident char(1), perf_pers char(1), refue char(1), reza char(1), kaus char(1), " \
               "ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " \
               "PRIMARY KEY (panr, prnr, voat, lfdNr))"
         self.db.execSql(sql, '')
@@ -78,11 +78,20 @@ class cls_createSchema():
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KAUS.Kundeninformation', 'berechtigter.adresse.hausnummer', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KAUS.Kundeninformation', 'berechtigter.adresse.plz', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KAUS.Kundeninformation', 'berechtigter.adresse.ort', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'KAUS.Kundeninformation', 'bankkonto.iban', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.panr', 'KAUS.Kundeninformation', 'geldleistung.postabrechnungsnummer', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.prnr', 'KAUS.Kundeninformation', 'geldleistung.postrentennummer', '-')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_12.geburtsdatumBerechtigterGBDTBC', 'KAUS.Kundeninformation', 'berechtigter.geburtsdatum', 'datum')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.leistungsartLEAT', 'KAUS.Kundeninformation', 'geldleistung.leistungsart', 'ps_leistungsartLEAT')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'KAUS.Kundeninformation', 'geldleistung.zahlzeitraum', 'ps_zahlzeitraumZLZR')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'REZA.Geldleistungskonten', 'kontoinhaber.iban', '-')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'REZA.Geldleistungskonten', 'zahlzeitraum', 'ps_zahlzeitraumZLZR')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlterminZLTE', 'REZA.Geldleistungskonten', 'zahltermin', 'ps_zahlterminZLTE')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbetragZLBT', 'REZA.Geldleistungskonten', 'auszahlungsbetrag', '-')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbeginnZLBE', 'REZA.Geldleistungskonten', 'zahlbeginn', 'datum_YYYYMM')",
                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.zunameZUNAME', 'PERF_PERS.personen', 'name.nachname', 'ze', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.vornameVORNAME', 'PERF_PERS.personen', 'name.vorname', 'ze', '-')"]
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.vornameVORNAME', 'PERF_PERS.personen', 'name.vorname', 'ze', '-')",
+                         ]
         for sqlInsert in sqlInsertList:
            # print(sqlInsert)
             self.db.execSql(sqlInsert, '')
@@ -107,7 +116,47 @@ class cls_createSchema():
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '03', 'Braille_Langschrift')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '12', 'Bereitstellung als E-Mail')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '13', 'CD-ROM_Schriftdatei')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '22', 'Hörmedium_CD-ROM_DAISY')"]
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '22', 'Hörmedium_CD-ROM_DAISY')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '1', 'monatlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '3', 'vierteljährlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '6', 'halbjährlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '9', 'jährlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '14', 'Rente_wegen_teilweiser_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '15', 'Rente_wegen_voller_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '16', 'Regelaltersrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '17', 'Altersrente_wegen_Arbeitslosigkeit_oder_nach_Altersteilzeitarbeit')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '18', 'Altersrente_fuer_Frauen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '20', 'Kleine_Witwenrente_oder_kleine_Witwerrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '21', 'Große_Witwenrente_oder_große_Witwerrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '22', 'Witwen-/Witwerrentenabfindung_einer_Rente_der_Leistungsart_20')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '23', 'Witwen-/Witwerrentenabfindung_einer_Rente_der_Leistungsart_21')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '25', 'Halbwaisenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '26', 'Vollwaisenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '30', 'Beitragserstattung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '31', 'Altersrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '32', 'Invalidenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '33', 'Invalidenrente_fuer_Behinderte')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '35', 'Witwenrente_oder_Witwerrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '36', 'Uebergangshinterbliebenenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '37', 'Unterhaltsrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '38', 'Halbwaisenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '39', 'Vollwaisenrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '43', 'Rente_wegen_voller_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '45', 'Erziehungsrente')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '46', 'Leistung_fuer_Kindererziehung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '62', 'Altersrente_fuer_schwerbehinderte_Menschen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '63', 'Altersrente_fuer_langjaehrig_Versicherte')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '65', 'Altersrente_fuer_besonders_langjaehrig_Versicherte')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '74', 'Rente_wegen_teilweiser_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '75', 'Rente_wegen_voller_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '76', 'Rente_wegen_voller_Erwerbsminderung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '95', 'Zinsen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '96', 'Erstattungen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '97', 'Verrechnung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '99', 'Bankspesen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '99', 'Bankspesen')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlterminZLTE', '0', 'vorschuessig')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlterminZLTE', '1', 'nachschuessig')"]
         for sqlInsert in sqlInsertList:
            # print(sqlInsert)
             self.db.execSql(sqlInsert, '')
