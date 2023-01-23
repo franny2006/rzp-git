@@ -8,13 +8,27 @@ config.read('../config/config.ini')
 
 class cls_dbAktionen():
     def __init__(self, zieldb=None):
-        mydb = mysql.connector.connect(host="localhost", user="root", password="root")
+        config = ConfigParser()
+        config.read('config/config.ini')
+        if config.get('Installation', 'lokal') == "True":
+            ziel = 'mysql Datenbank lokal'
+        else:
+            ziel = 'mysql Datenbank Docker'
+        configuration = {
+            'user': config.get(ziel, 'user'),
+            'password': config.get(ziel, 'pass'),
+            'host': config.get(ziel, 'host'),
+            'port': config.get(ziel, 'port'),
+            'database': config.get(ziel, 'database')
+        }
+
+        mydb = mysql.connector.connect(host=configuration['host'], user=configuration['user'], password=configuration['password'])
    #     mydb = mysql.connector.connect(host="rzp-mysql", user="root", password="root")
         self.mycursor = mydb.cursor()
         self.mycursor.execute("CREATE DATABASE IF NOT EXISTS rzp_git")
 
 
-        self.mydb = mysql.connector.connect(host="localhost", user="root", password="root", database="rzp_git")
+        self.mydb = mysql.connector.connect(host=configuration['host'], user=configuration['user'], password=configuration['password'], database=configuration['database'])
     #    self.mydb = mysql.connector.connect(host="rzp-mysql", user="root", password="root", database="rzp_git")
         mycursor = self.mydb.cursor()
         mycursor.execute("CREATE TABLE IF NOT EXISTS customers (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), address VARCHAR(255))")

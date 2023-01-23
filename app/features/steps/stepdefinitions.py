@@ -13,7 +13,7 @@ def step_init(context):
 @given('Es wurde ein Auftrag mit PANR = {panr}, PRNR = {prnr}, VOAT = {voat}, lfdNr = {lfdNr}, TransaktionsId = {transaktionsId} eingespielt')
 def step_givenAuftrag(context, panr, prnr, voat, lfdNr, transaktionsId):
     sql = "select count(transaktionsId) as anz from transaktionIds where transaktionsId = '" + str(transaktionsId) + "' and panr = '" + str(panr) + "' and prnr = '" + str(prnr) + "' and voat = '" + str(voat) + "' and lfdNr = '" + str(lfdNr) + "'"
-    print(sql)
+ #   print(sql)
     anzTransaktionen = db.execSelect(sql, '')
     anzTransaktionen = anzTransaktionen[0]['anz']
     context.transaktionsId = transaktionsId
@@ -24,19 +24,20 @@ def step_givenAuftrag(context, panr, prnr, voat, lfdNr, transaktionsId):
 
     assert anzTransaktionen == 1
 
-@when('dieser Auftrag vollstaendig verarbeitet wurde')
-def step_verarbeitungPruefen(context):
-    sqlStatus = "select * from transaktionIds where transaktionsId = '" + context.transaktionsId + "'"
+@when('dieser Auftrag in der Datenbank {zielDb} gespeichert wurde')
+def step_verarbeitungPruefen(context, zielDb):
+    zielDb = zielDb.split(".")[0]
+    sqlStatus = "select " + zielDb.lower() + " from transaktionIds where transaktionsId = '" + context.transaktionsId + "'"
     verarbeitungsStatus = db.execSelect(sqlStatus, '')
     dbFehlt = ""
-    for rzpDb in rzpDatenbanken:
-        if verarbeitungsStatus[0][rzpDb.lower()] != "1":
-            dbFehlt = dbFehlt + str(rzpDb) + " - "
+    if verarbeitungsStatus[0][zielDb.lower()] != "1":
+        dbFehlt = dbFehlt + str(zielDb) + " - "
 
-    assert dbFehlt == "", f'Verarbeitung in Datenbanken unvollständig: ' + dbFehlt
+    assert dbFehlt == "", f'Verarbeitung in Datenbank unvollständig: ' + dbFehlt
 
-@then("enthaelt in der Datenbank {zielDb} das Feld {zielFeld} den ggf. nach Regel {regel} konvertierten Wert {inhaltAuftrag}")
-def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
+
+@then("enthaelt die Datenbank {zielDb} zum Auftragswert {inhaltAuftrag} im Feld {zielFeld} den SOLL-Wert {sollErgebnis}")
+def step_verifyFelder(context, zielDb, zielFeld, inhaltAuftrag, sollErgebnis):
     # Dokumente ermitteln und in Dicts umwandeln
     listDokumente = []
     for app in rzpDatenbanken:
@@ -49,36 +50,38 @@ def step_verifyFelder(context, zielDb, zielFeld, regel, inhaltAuftrag):
         except:
             dokument['dokument'] = "{}"
         listDokumente.append(dokument)
-    print(listDokumente[0]['herkunft'])
+ #   print(listDokumente[0]['herkunft'])
 
     # Vergleich der Inhalte aus Auftragsdaten und Dokumenten-Dict
     zielDb = zielDb.split(".")[0]
     zielFeldDict = splitZielfeld(zielFeld)
 
     for dokument in listDokumente:
-
         if dokument['herkunft'] == zielDb:
             dictDokument = json.loads(dokument['dokument'])
-     #       print(dictDokument)
             try:
                 feldInhaltDokument = eval(zielFeldDict)
             except:
                 feldInhaltDokument = "Feld nicht vorhanden"
 
+    listBetragsfelder = ['betrag', 'euro']
+    if any(ele in zielFeld for ele in listBetragsfelder):
+        sollErgebnis = sollErgebnis.lstrip("0")
 
-    if regel:
-        inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
-    inhaltAuftrag = inhaltAuftrag.lstrip("0")
-    assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
+    if sollErgebnis.strip() == "<leer>":
+        assert feldInhaltDokument == "Feld nicht vorhanden" or feldInhaltDokument == "", f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
+    else:
+        assert str(sollErgebnis.strip()) == str(feldInhaltDokument), f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
-@then("enthaelt zur Rolle {rolle} in der Datenbank {zielDb} das Feld {zielFeld} den ggf. nach Regel {regel} konvertierten Wert {inhaltAuftrag}")
-def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, regel, inhaltAuftrag):
+
+@then("enthaelt die Rolle {rolle} in der Datenbank {zielDb} zum Auftragswert {inhaltAuftrag} im Feld {zielFeld} den SOLL-Wert {sollErgebnis}")
+def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, inhaltAuftrag, sollErgebnis):
     # Dokumente ermitteln und in Dicts umwandeln
     listDokumente = []
     for app in rzpDatenbanken:
         sql = "select document from documents where transaktionsId = '" + context.transaktionsId + "' and herkunft = '" + app + "' and rolle = '" + rolle.lower() + "'"
-        print(sql)
+  #      print(sql)
         resultDokument = db.execSelect(sql, '')
         dokument = {}
         dokument['herkunft'] = app
@@ -87,7 +90,7 @@ def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, regel, inhaltAuftr
         except:
             dokument['dokument'] = "{}"
         listDokumente.append(dokument)
-    print("Dokumente: ", listDokumente)
+  #  print("Dokumente: ", listDokumente)
 
     # Vergleich der Inhalte aus Auftragsdaten und Dokumenten-Dict
     zielDb = zielDb.split(".")[0]
@@ -102,11 +105,13 @@ def step_verifyFelderRollen(context, zielDb, rolle, zielFeld, regel, inhaltAuftr
             except:
                 feldInhaltDokument = "Feld nicht vorhanden"
 
-    if regel:
-        inhaltAuftrag = konvertierungsregel_anwenden(regel, inhaltAuftrag.strip())
-
-    inhaltAuftrag = inhaltAuftrag.lstrip("0")
-    assert inhaltAuftrag.strip() == feldInhaltDokument, f'SOLL: ' + str(inhaltAuftrag.strip()) + ' - IST: ' + str(feldInhaltDokument)
+    listBetragsfelder = ['betrag', 'euro']
+    if any(ele in zielFeld for ele in listBetragsfelder):
+        sollErgebnis = sollErgebnis.lstrip("0")
+    if sollErgebnis.strip() == "<leer>":
+        assert feldInhaltDokument == "Feld nicht vorhanden" or feldInhaltDokument == "", f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
+    else:
+        assert str(sollErgebnis.strip()) == str(feldInhaltDokument), f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
 
 
 

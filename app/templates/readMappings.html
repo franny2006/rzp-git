@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container features">
+    <p></p>
+    <h3>Upload Mappingregeln</h3>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+    <table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>Mapping</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <tr>
+            <td><input type="file" name="file"></td>
+            <td><input type="submit" value="Mappingregeln einlesen"></td>
+        </tr>
+        </tbody>
+    </table>
+    </form>
+</div>
+
+
+
+
+{% endblock %}

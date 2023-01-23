@@ -58,10 +58,36 @@ connColl = connDb[coll]
 uuidConv = b64encode(uuid.UUID(strUuid).bytes).decode()
 print(uuidConv)
 cursor = connColl.find({})
-for document in cursor:
-    print(document)
+
 result = connColl.find({})
 for r in result:
     print("...", r)
 #result = connColl.find_one({'transaktionsId': uuid.UUID("d620d31b-a922-40f2-bf76-aaa668148e7d")})
 print("Warum???", result)
+
+
+db = 'rzp_person_perf_git'
+coll = 'identitaeten'
+connClient = MongoClient(connString, uuidRepresentation="standard")
+connDb = connClient[db]
+connColl = connDb[coll]
+transaktionsId = "e1606b08-2343-432f-aa59-9b2413a439f2"
+transaktionsId = "5163b01a-4ab2-4632-bb35-f2d6ebbd2f4e"
+rollen = ['RZP_BERECHTIGTER', 'RZP_ZAHLUNGSEMPFAENGER', 'RZP_MITTEILUNGSEMPFAENGER', 'RZP_KONTOINHABER']
+for rolle in rollen:
+    #    listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
+    listResult = connColl.find_one({
+        "rollen": rolle,
+        "art": "OUTBOUND",
+        "fachlicherStatus": "FREIGEGEBEN",
+        "transaktionsId": uuid.UUID(transaktionsId)})
+
+    print("Result", listResult)
+    #print("Identität:", listResult['identitaetenId'])
+
+    listResult = connColl.find_one({
+        "transaktionsId": uuid.UUID('7fbfeb97-bff1-47f6-8f88-12ae749415af'),
+        "identitaetenId": uuid.UUID('7c46e87d-823d-46c5-a59c-dd3e8651d5d2')},
+                 sort=[("_id", pymongo.DESCENDING)])
+
+    print("Result", listResult)

@@ -31,6 +31,18 @@
       "collection": "personen"
     },
     {
+      "connectionName": "REFUE",
+      "connectionString": "mongodb://root:example@mongodb-test_mongo_1:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
+      "database":  "rzp_rente_refue_git",
+      "collection": "LaufendeGeldleistungen"
+    },
+    {
+      "connectionName": "REZA",
+      "connectionString": "mongodb://root:example@mongodb-test_mongo_1:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
+      "database":  "rzp_rente_reza_git",
+      "collection": "geldleistungskonten"
+    },
+    {
       "connectionName": "KAUS",
       "connectionString": "mongodb://root:example@mongodb-test_mongo_1:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
       "database":  "rzp_kunde_kaus_git",

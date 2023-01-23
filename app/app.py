@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from classes.cls_parseZaToDb import cls_parseZa
 from classes.cls_createDbSchema import cls_createSchema
 from classes.cls_readAuftraege import cls_readAuftraege
+from classes.cls_readMappings import cls_readMappings
 from classes.cls_readMongo import cls_readMongo
 
 
@@ -41,6 +42,20 @@ def resetGui():
 def resetDb():
     cls_createSchema()
     return redirect('/')
+
+### Mappingregeln importieren ########################################################
+@app.route('/readMappings')
+def uploadMapping():
+    return render_template('readMappings.html', title="Upload File")
+
+@app.route('/readMappings', methods=['POST'])
+def uploadMapping_submitted():
+    strEncoding = "latin_1"
+    uploaded_file = request.files['file']
+    if uploaded_file.filename != '':
+        uploaded_file.save('uploads/' + uploaded_file.filename)
+        importMappings = cls_readMappings('uploads/' + uploaded_file.filename)
+    return redirect('/showAuftraege')
 
 
 ### ZA-Datei importieren #############################################################
@@ -113,40 +128,42 @@ def readRzp():
         connMongo = cls_readMongo()
         transaktionsId = connMongo.readTransaktionsId(dictAuftragUnique[0]['panr'], dictAuftragUnique[0]['prnr'], dictAuftragUnique[0]['voat'], dictAuftragUnique[0]['lfdNr'])
 
-        # Identitaeten- und PersonenIds für alle Rollen ermitteln
-        identitaeten_personen_ids = connMongo.readRollenIds(transaktionsId['transaktionsId'])
-     #   print(identitaeten_personen_ids)
+        if transaktionsId['transaktionsId'] != 'None':
 
-        # Daten aus KAUS holen
-        kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
+            # Identitaeten- und PersonenIds für alle Rollen ermitteln
+            identitaeten_personen_ids = connMongo.readRollenIds(transaktionsId['transaktionsId'])
+         #   print(identitaeten_personen_ids)
 
-        #AAN
-        aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", None, None, None, "sequenz")
-        wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
-        refue = connMongo.readApplication(transaktionsId['transaktionsId'], "REFUE", "transaktionsId", None, None, None, "_id")
-        reza = connMongo.readApplication(transaktionsId['transaktionsId'], "REZA", "transaktionsId", None, None, None, "_id")
+            # Daten aus KAUS holen
+            kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
 
-        # Identität und Person pro Rolle
-        for rolle in identitaeten_personen_ids:
-            if rolle['rolle'] == "ze":
-                rolle_postfix = "ze"
-                idIdentBez = "identitaetenId_ze"
-                idPersonBez = "personId_ze"
-            elif rolle['rolle'] == "be":
-                rolle_postfix = "be"
-                idIdentBez = "identitaetenId_be"
-                idPersonBez = "personId_be"
-            elif rolle['rolle'] == "me":
-                rolle_postfix = "me"
-                idIdentBez = "identitaetenId_me"
-                idPersonBez = "personId_me"
-            elif rolle['rolle'] == "ki":
-                rolle_postfix = "ki"
-                idIdentBez = "identitaetenId_ki"
-                idPersonBez = "personId_ki"
+            #AAN
+            aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", None, None, None, "sequenz")
+            wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
+            refue = connMongo.readApplication(transaktionsId['transaktionsId'], "REFUE", "transaktionsId", None, None, None, "_id")
+            reza = connMongo.readApplication(transaktionsId['transaktionsId'], "REZA", "transaktionsId", None, None, None, "_id")
 
-            perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId.binary.base64", rolle['rolle'], "identitaetenId.binary.base64", rolle['identitaetenId'], "_id")
-            perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId.binary.base64", rolle['rolle'], "personId.binary.base64", rolle['personId'], "_id")
+            # Identität und Person pro Rolle
+            for rolle in identitaeten_personen_ids:
+                if rolle['rolle'] == "ze":
+                    rolle_postfix = "ze"
+                    idIdentBez = "identitaetenId_ze"
+                    idPersonBez = "personId_ze"
+                elif rolle['rolle'] == "be":
+                    rolle_postfix = "be"
+                    idIdentBez = "identitaetenId_be"
+                    idPersonBez = "personId_be"
+                elif rolle['rolle'] == "me":
+                    rolle_postfix = "me"
+                    idIdentBez = "identitaetenId_me"
+                    idPersonBez = "personId_me"
+                elif rolle['rolle'] == "ki":
+                    rolle_postfix = "ki"
+                    idIdentBez = "identitaetenId_ki"
+                    idPersonBez = "personId_ki"
+
+                perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId", rolle['rolle'], "identitaetenId", rolle['identitaetenId'], "_id")
+                perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId", rolle['rolle'], "personId", rolle['personId'], "_id")
 
 
     return redirect('/showAuftraege')

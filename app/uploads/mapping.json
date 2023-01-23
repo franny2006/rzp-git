@@ -1,0 +1,193 @@
+{
+	"mappings": [
+		{
+			"feldAuftrag": "SA_11.zunameZUNAME",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerName.zunameZUNAME",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_11.vornameVORNAME",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerName.vornameVORNAME",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_14.strasseZahlungsempfaengerSE",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerAdresse.strasseSE",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_14.hausnummerZahlumgsempfaengerHAUSNR",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerAdresse.hausnummerHAUSNR",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerPlzPLZ",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerWohnort.plzPLZ",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerOrtOT",
+			"zielDb": "KUGA.Anliegen",
+			"zielFeld": "keyValue.zahlungsempfaengerWohnort.ortOT",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_11.anredeschluesselANREDSC",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.name.anrede",
+			"rolle": "",
+			"regel": "ps_anrede"
+		},
+		{
+			"feldAuftrag": "SA_11.barrierefreieKommunikationMMBARKO",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.kommunikationsmerkmal",
+			"rolle": "",
+			"regel": "ps_mmbarko"
+		},
+		{
+			"feldAuftrag": "SA_11.zunameZUNAME",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.name.nachname",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_11.vornameVORNAME",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.name.vorname",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_14.strasseZahlungsempfaengerSE",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.adresse.strasse",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_14.hausnummerZahlumgsempfaengerHAUSNR",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.adresse.hausnummer",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerPlzPLZ",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.adresse.plz",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerOrtOT",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.adresse.ort",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_15.iban",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "bankkonto.iban",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.panr",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "geldleistung.postabrechnungsnummer",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.prnr",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "geldleistung.postrentennummer",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_12.geburtsdatumBerechtigterGBDTBC",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "berechtigter.geburtsdatum",
+			"rolle": "",
+			"regel": "datum"
+		},
+		{
+			"feldAuftrag": "SA_61.leistungsartLEAT",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "geldleistung.leistungsart",
+			"rolle": "",
+			"regel": "ps_leistungsartLEAT"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlzeitraumZLZR",
+			"zielDb": "KAUS.Kundeninformation",
+			"zielFeld": "geldleistung.zahlzeitraum",
+			"rolle": "",
+			"regel": "ps_zahlzeitraumZLZR"
+		},
+		{
+			"feldAuftrag": "SA_15.iban",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "kontoinhaber.iban",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlzeitraumZLZR",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahlzeitraum",
+			"rolle": "",
+			"regel": "ps_zahlzeitraumZLZR"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlterminZLTE",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahltermin",
+			"rolle": "",
+			"regel": "ps_zahlterminZLTE"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbetragZLBT",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "auszahlungsbetrag",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbeginnZLBE",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "SA_61.zahlbeginnZLBE",
+			"rolle": "",
+			"regel": "datum_YYYYMM"
+		},
+		{
+			"feldAuftrag": "SA_11.zunameZUNAME",
+			"zielDb": "PERF_PERS.personen",
+			"zielFeld": "name.nachname",
+			"rolle": "ze",
+			"regel": ""
+		},
+		{
+			"feldAuftrag": "SA_11.vornameVORNAME",
+			"zielDb": "PERF_PERS.personen",
+			"zielFeld": "name.vorname",
+			"rolle": "ze",
+			"regel": ""
+		}
+	]
+}

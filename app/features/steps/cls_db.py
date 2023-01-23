@@ -8,7 +8,20 @@ from configparser import ConfigParser
 
 class cls_dbAktionen():
     def __init__(self, zieldb=None):
-        self.mydb = mysql.connector.connect(host="localhost", user="root", password="root", database="rzp_git")
+        config = ConfigParser()
+        config.read('config/config.ini')
+        if config.get('Installation', 'lokal') == "True":
+            ziel = 'mysql Datenbank lokal'
+        else:
+            ziel = 'mysql Datenbank Docker'
+        configuration = {
+            'user': config.get(ziel, 'user'),
+            'password': config.get(ziel, 'pass'),
+            'host': config.get(ziel, 'host'),
+            'port': config.get(ziel, 'port'),
+            'database': config.get(ziel, 'database')
+        }
+        self.mydb = mysql.connector.connect(host=configuration['host'], user=configuration['user'], password=configuration['password'], database=configuration['database'])
     #    self.mydb = mysql.connector.connect(host="rzp-mysql", user="root", password="root", database="rzp_git")
 
     def execSql(self, statement, val):

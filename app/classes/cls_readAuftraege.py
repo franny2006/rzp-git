@@ -9,19 +9,25 @@ class cls_readAuftraege():
         self.db = cls_dbAktionen(herkunft)
 
     def read_Auftraege_uebersicht(self):
-        sql = "select za.*, rzp.*, ' ' as rolleZe, ' ' as rolleBe, ' ' as rolleMe " \
+        sql = "select za.*, rzp.*, ' ' as rolleZe, ' ' as rolleBe, ' ' as rolleMe, sa_90.buchungsKassenzeichenZahlungsempfaengerBVZE as titel1, sa_90.behoerdenaktenzeichenAKZESW as titel2 " \
               "from (select a.runId, a.dsId, laufendeNummerZL, panr as za_panr, prnr as za_prnr, voat as za_voat, datei from sa_ft a, runs b where a.runId = b.Id) za " \
-              "left join transaktionIds rzp on " \
-              "za.za_panr = rzp.panr and za.za_prnr=rzp.prnr and za.za_voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr"
+              "left join transaktionIds rzp " \
+              " on za.za_panr = rzp.panr and za.za_prnr=rzp.prnr and za.za_voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr " \
+              "left join sa_90 " \
+              " on sa_90.runId = za.runId and sa_90.dsId = za.dsId"
         auftraege = self.db.execSelect(sql, '')
         for auftrag in auftraege:
-     #       print("Auftrag:", auftrag)
-            rollen = self.read_Rollen_Auftrag(auftrag['runId'], auftrag['dsId'])
-     #      print("Rollen:", rollen)
-            auftrag['rolleZe'] = rollen['rolleZe']
-            auftrag['rolleBe'] = rollen['rolleBe']
-            auftrag['rolleMe'] = rollen['rolleMe']
-    #    print("Auftraege: ", auftraege)
+            if auftrag['za_voat'] in ('21'):
+                rollen = self.read_Rollen_Auftrag(auftrag['runId'], auftrag['dsId'])
+
+                auftrag['rolleZe'] = rollen['rolleZe']
+                auftrag['rolleBe'] = rollen['rolleBe']
+                auftrag['rolleMe'] = rollen['rolleMe']
+            else:
+                auftrag['rolleZe'] = ""
+                auftrag['rolleBe'] = ""
+                auftrag['rolleMe'] = ""
+                #    print("Auftraege: ", auftraege)
         return auftraege
 
 
@@ -45,7 +51,8 @@ class cls_readAuftraege():
               "on ze.runId = me.runId and ze.dsId = me.dsId " \
               "left join sa_95 " \
               "on ze.runId = sa_95.runId and ze.dsId = sa_95.dsId " \
-              "where ze.runId = '" + str(runId) + "' and ze.dsId = '" + str(dsId) + "' "
+              "where ze.runId = '" + str(runId) + "' and ze.dsId = '" + str(dsId) + "'"
+
         rollen = self.db.execSelect(sql, '')
         ze = str(rollen[0]['anredeschluesselANREDSC']) + str(rollen[0]['vornameVORNAME']) + str(rollen[0]['zunameZUNAME'])
         be = str(rollen[0]['anredeschluesselBerechtigterANREDSCBC']) + str(rollen[0]['vornameBerechtigterVORNAMEBC']) + str(rollen[0]['zunameBerechtigterZUNAMEBC'])

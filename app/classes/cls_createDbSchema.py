@@ -15,8 +15,9 @@ class cls_createSchema():
   #     self.createTableRollen()
         self.createTables()
         self.createView()
-        self.createTableGherkin_Mappings()
+  #      self.createTableGherkin_Mappings()
         self.createTableSchluessel()
+        self.createTableRzpDatenbanken()
 
 
 
@@ -50,6 +51,19 @@ class cls_createSchema():
               "ENGINE=InnoDB DEFAULT CHARSET=latin1;"
         self.db.execSql(sql, '')
 
+    def createTableRzpDatenbanken(self):
+        sql = "drop table if exists rzp_datenbanken"
+        self.db.execSql(sql, '')
+        sql = "CREATE TABLE IF NOT EXISTS rzp_datenbanken " \
+              "(rzpDB varchar(70), sort INTEGER)"
+        self.db.execSql(sql, '')
+        sqlInsertList = ["insert into rzp_datenbanken (rzpDb, sort) values ('KUGA.Anliegen', 1)",
+                         "insert into rzp_datenbanken (rzpDb, sort) values ('PERF_PERS.personen', 2)",
+                         "insert into rzp_datenbanken (rzpDb, sort) values ('REZA.Geldleistungskonten', 3)",
+                         "insert into rzp_datenbanken (rzpDb, sort) values ('KAUS.Kundeninformation', 4)"]
+        for sqlInsert in sqlInsertList:
+            self.db.execSql(sqlInsert, '')
+
     def createTableRollen(self):
         sql = "drop table if exists rollen"
         self.db.execSql(sql, '')
@@ -59,42 +73,7 @@ class cls_createSchema():
               "PRIMARY KEY (transaktionsId, id, art))"
         self.db.execSql(sql, '')
 
-    def createTableGherkin_Mappings(self):
-        sql = "drop table if exists gherkin_mapping"
-        self.db.execSql(sql, '')
-        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), rolle char(2), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
-        self.db.execSql(sql, '')
-        sqlInsertList = ["insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.zunameZUNAME', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.vornameVORNAME', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.strasseZahlungsempfaengerSE', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerAdresse.strasseSE', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerAdresse.hausnummerHAUSNR', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.plzPLZ', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.ortOT', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.anredeschluesselANREDSC', 'KAUS.Kundeninformation', 'berechtigter.name.anrede', 'ps_anrede')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.barrierefreieKommunikationMMBARKO', 'KAUS.Kundeninformation', 'berechtigter.kommunikationsmerkmal', 'ps_mmbarko')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KAUS.Kundeninformation', 'berechtigter.name.nachname', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KAUS.Kundeninformation', 'berechtigter.name.vorname', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.strasseZahlungsempfaengerSE', 'KAUS.Kundeninformation', 'berechtigter.adresse.strasse', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KAUS.Kundeninformation', 'berechtigter.adresse.hausnummer', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KAUS.Kundeninformation', 'berechtigter.adresse.plz', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KAUS.Kundeninformation', 'berechtigter.adresse.ort', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'KAUS.Kundeninformation', 'bankkonto.iban', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.panr', 'KAUS.Kundeninformation', 'geldleistung.postabrechnungsnummer', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.prnr', 'KAUS.Kundeninformation', 'geldleistung.postrentennummer', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_12.geburtsdatumBerechtigterGBDTBC', 'KAUS.Kundeninformation', 'berechtigter.geburtsdatum', 'datum')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.leistungsartLEAT', 'KAUS.Kundeninformation', 'geldleistung.leistungsart', 'ps_leistungsartLEAT')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'KAUS.Kundeninformation', 'geldleistung.zahlzeitraum', 'ps_zahlzeitraumZLZR')",
-                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'REZA.Geldleistungskonten', 'kontoinhaber.iban', '-')",
-                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'REZA.Geldleistungskonten', 'zahlzeitraum', 'ps_zahlzeitraumZLZR')",
-                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlterminZLTE', 'REZA.Geldleistungskonten', 'zahltermin', 'ps_zahlterminZLTE')",
-                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbetragZLBT', 'REZA.Geldleistungskonten', 'auszahlungsbetrag', '-')",
-                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbeginnZLBE', 'REZA.Geldleistungskonten', 'zahlbeginn', 'datum_YYYYMM')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.zunameZUNAME', 'PERF_PERS.personen', 'name.nachname', 'ze', '-')",
-                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.vornameVORNAME', 'PERF_PERS.personen', 'name.vorname', 'ze', '-')",
-                         ]
-        for sqlInsert in sqlInsertList:
-           # print(sqlInsert)
-            self.db.execSql(sqlInsert, '')
+
 
     def createTableSchluessel(self):
         sql = "drop table if exists schluessel"
@@ -257,6 +236,44 @@ class cls_createSchema():
         self.db.closeDB()
 
 
+
+    # deprecated
+    def createTableGherkin_Mappings(self):
+        sql = "drop table if exists gherkin_mapping"
+        self.db.execSql(sql, '')
+        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), rolle char(2), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+        self.db.execSql(sql, '')
+        sqlInsertList = ["insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.zunameZUNAME', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerName.vornameVORNAME', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.strasseZahlungsempfaengerSE', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerAdresse.strasseSE', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerAdresse.hausnummerHAUSNR', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.plzPLZ', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KUGA.Anliegen', 'keyValue.zahlungsempfaengerWohnort.ortOT', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.anredeschluesselANREDSC', 'KAUS.Kundeninformation', 'berechtigter.name.anrede', 'ps_anrede')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.barrierefreieKommunikationMMBARKO', 'KAUS.Kundeninformation', 'berechtigter.kommunikationsmerkmal', 'ps_mmbarko')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.zunameZUNAME', 'KAUS.Kundeninformation', 'berechtigter.name.nachname', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_11.vornameVORNAME', 'KAUS.Kundeninformation', 'berechtigter.name.vorname', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.strasseZahlungsempfaengerSE', 'KAUS.Kundeninformation', 'berechtigter.adresse.strasse', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_14.hausnummerZahlumgsempfaengerHAUSNR', 'KAUS.Kundeninformation', 'berechtigter.adresse.hausnummer', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerPlzPLZ', 'KAUS.Kundeninformation', 'berechtigter.adresse.plz', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_13.zahlungsempfaengerOrtOT', 'KAUS.Kundeninformation', 'berechtigter.adresse.ort', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'KAUS.Kundeninformation', 'bankkonto.iban', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.panr', 'KAUS.Kundeninformation', 'geldleistung.postabrechnungsnummer', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_FT.prnr', 'KAUS.Kundeninformation', 'geldleistung.postrentennummer', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_12.geburtsdatumBerechtigterGBDTBC', 'KAUS.Kundeninformation', 'berechtigter.geburtsdatum', 'datum')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.leistungsartLEAT', 'KAUS.Kundeninformation', 'geldleistung.leistungsart', 'ps_leistungsartLEAT')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'KAUS.Kundeninformation', 'geldleistung.zahlzeitraum', 'ps_zahlzeitraumZLZR')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_15.iban', 'REZA.Geldleistungskonten', 'kontoinhaber.iban', '-')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlzeitraumZLZR', 'REZA.Geldleistungskonten', 'zahlzeitraum', 'ps_zahlzeitraumZLZR')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlterminZLTE', 'REZA.Geldleistungskonten', 'zahltermin', 'ps_zahlterminZLTE')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbetragZLBT', 'REZA.Geldleistungskonten', 'auszahlungsbetrag', '-')",
+                         "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, regel) values ('SA_61.zahlbeginnZLBE', 'REZA.Geldleistungskonten', 'zahlbeginn', 'datum_YYYYMM')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.zunameZUNAME', 'PERF_PERS.personen', 'name.nachname', 'ze', '-')",
+                        "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values ('SA_11.vornameVORNAME', 'PERF_PERS.personen', 'name.vorname', 'ze', '-')",
+                         ]
+        for sqlInsert in sqlInsertList:
+           # print(sqlInsert)
+            self.db.execSql(sqlInsert, '')
 
 if __name__ == "__main__":
     x = cls_createSchema()

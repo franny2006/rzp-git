@@ -8,12 +8,19 @@ from django.core.serializers.json import DjangoJSONEncoder
 from bson.codec_options import CodecOptions
 from bson.binary import UuidRepresentation
 from base64 import b64encode, b64decode
+from configparser import ConfigParser
 
 from .cls_db import cls_dbAktionen
 
 class cls_readMongo():
     def __init__(self):
-        with open('config/config.json') as json_file:
+        config = ConfigParser()
+        config.read('config/config.ini')
+        if config.get('Installation', 'lokal') == "True":
+            ziel = 'mongo-db-config lokal'
+        else:
+            ziel = 'mongo-db-config Docker'
+        with open(config.get(ziel, 'configfile')) as json_file:
             self.configData = json.load(json_file)
 
     def readTransaktionsId(self, panr, prnr, voat, lfdNr):
@@ -39,7 +46,7 @@ class cls_readMongo():
         ]})
 
 
-        statusAnliegen = {'_id': '', 'pruefergebnis': ''}
+        statusAnliegen = {'_id': '', 'pruefergebnis': '', 'transaktionsId': 'None'}
         anzHinweise = 0
         listHinweise = [{'hinweisCode': '', 'hinweisText': ''}]
         anzFehler = 0
@@ -79,15 +86,17 @@ class cls_readMongo():
        #     print(listResults)
             self.saveDocument("KUGA", listResults['_id'], None, None, None, listResults)
 
-        self.writeTransaktionsId(statusAnliegen)
-        # Speichern der TransaktionsId
-        self.writeStatusApp("KUGA", "1", listResults['_id'])
+            self.writeTransaktionsId(statusAnliegen)
+            # Speichern der TransaktionsId
+            self.writeStatusApp("KUGA", "1", listResults['_id'])
+
 
 
         return statusAnliegen
 
     def writeTransaktionsId(self, statusAnliegen):
         self.db = cls_dbAktionen()
+
         sql_valuelist = [str(statusAnliegen['panr']), str(statusAnliegen['prnr']), str(statusAnliegen['voat']), str(statusAnliegen['lfdNr']),
                          str(statusAnliegen['transaktionsId']), str(statusAnliegen['pruefergebnis']), str(statusAnliegen['anzHinweise']), str(statusAnliegen['hinweis1']), str(statusAnliegen['anzFehler']), str(statusAnliegen['fehler1'])]
         sql = "insert into transaktionIds (panr, prnr, voat, lfdNr, transaktionsid, pruefergebnis, anzHinweise, hinweis, anzFehler, fehler) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) " \
@@ -111,10 +120,15 @@ class cls_readMongo():
         transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
         rollenList = []
         for rolle in rollen:
-            listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
+        #    listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
+            listResult = connColl.find_one({
+                                           "rollen": rolle,
+                                           "art": "OUTBOUND",
+                                           "fachlicherStatus": "FREIGEGEBEN",
+                                           "transaktionsId": UUID(transaktionsId)})
             if listResult:
-                identitaetenId = listResult['identitaetenId']['binary']['base64']
-                personId = listResult['personId']['binary']['base64']
+                identitaetenId = listResult['identitaetenId']
+                personId = listResult['personId']
                 if rolle == "RZP_BERECHTIGTER":
                     postfix = "be"
                 elif rolle == "RZP_ZAHLUNGSEMPFAENGER":
@@ -123,7 +137,7 @@ class cls_readMongo():
                     postfix = "me"
                 elif rolle == "RZP_KONTOINHABER":
                     postfix = "ki"
-                sqlUpdateRollen = "update transaktionIds set identitaetenId_" + str(postfix) + " = '" + str(identitaetenId) + "', personId_" + str(postfix) + " = '" + str(personId) + "'"
+                sqlUpdateRollen = "update transaktionIds set identitaetenId_" + str(postfix) + " = '" + str(identitaetenId) + "', personId_" + str(postfix) + " = '" + str(personId) + "' where transaktionsId = '" + str(transaktionsId) + "'"
                 self.db.execSql(sqlUpdateRollen, '')
                 rolleDict = {
                     'rolle': postfix,
@@ -152,13 +166,16 @@ class cls_readMongo():
         elif appName in ("PERF_IDENT", "PERF_PERS"):
             transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
             result = connColl.find_one(
-                {nameTransaktionsId: transaktionsIdConv,
-                 nameId2: id2},
+                {nameTransaktionsId: UUID(transaktionsId),
+                 nameId2: UUID(id2)},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
-        else:                                                       # KAUS, WCH, REZA
+        else:                                                       # KAUS, WCH, REZA, REFUE
             result = connColl.find_one(
                 {nameTransaktionsId: UUID(transaktionsId)},
                  sort=[(nameSortfield, pymongo.DESCENDING)])
+            if (appName == "REFUE"):
+                print(nameTransaktionsId, uuid.UUID(transaktionsId), nameId2, id2)
+                print("result:", result)
 
         if result:
             # Speichern des Dokuments
@@ -186,7 +203,7 @@ class cls_readMongo():
         if result:
             # Speichern des Status, wenn Transaktion in KAUS gefunden wurde
             self.writeStatusApp("KAUS", "1", transaktionsId)
-            self.writeKaus(transaktionsId, result)
+         #   self.writeKaus(transaktionsId, result)
 
             # Speichern des Dokuments
             self.saveDocument("KAUS", transaktionsId, None, None, None, result)

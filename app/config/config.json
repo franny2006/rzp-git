@@ -34,7 +34,7 @@
       "connectionName": "REFUE",
       "connectionString": "mongodb://root:example@localhost:27017/?authSource=admin&authMechanism=SCRAM-SHA-256",
       "database":  "rzp_rente_refue_git",
-      "collection": "LaufendeGeldleistungen"
+      "collection": "LaufendeGeldleistung"
     },
     {
       "connectionName": "REZA",

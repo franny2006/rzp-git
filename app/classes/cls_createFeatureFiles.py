@@ -2,6 +2,8 @@ import io
 import os
 from .cls_db import cls_dbAktionen
 
+#rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA']
+
 class cls_create_featureFiles():
     def __init__(self):
         # Bestehende Feature-Files löschen
@@ -19,9 +21,16 @@ class cls_create_featureFiles():
 
         self.db = cls_dbAktionen()
         auftraege = self.readAuftraege()
+
+
+
         for dictAuftrag in auftraege:
+
+            self.line = []
+            self.line.append("Feature: Pruefe Auftrag: " + str(dictAuftrag['transaktionsId']))
             self.createFile_standard(dictAuftrag)
-            self.createFile_rollen(dictAuftrag)
+
+       #     self.createFile_rollen(dictAuftrag)
     #    self.createFile()
         pass
 
@@ -33,87 +42,138 @@ class cls_create_featureFiles():
               "and v.prnr = t.prnr " \
               "and v.voat = t.voat " \
               "and v.laufendeNummerZL = t.lfdNr " \
-              "where anzFehler = 0"
+              "where anzFehler = 0 " \
+              "and t.voat = 21"
         auftraege = self.db.execSelect(sql, '')
         return auftraege
 
-    def readMapping(self, art):
+    def readMapping(self, art, rzpDb):
         if art == "standard":
-            sql = "select * from gherkin_mapping where rolle is Null"
+            sql = "select * from gherkin_mapping where rolle is Null and zielDb = '" + rzpDb + "'"
         elif art == "rollen":
-            sql = "select * from gherkin_mapping where rolle is not Null"
+            sql = "select * from gherkin_mapping where rolle is not Null and zielDb = '" + rzpDb + "'"
         mappings = self.db.execSelect(sql, '')
         return mappings
 
     def createFile_standard(self, dictAuftrag):
-        line = []
-        line.append("Feature: Pruefe Einzelfelder: " + str(dictAuftrag['transaktionsId']))
-        line.append("  Scenario Outline: Einzelne Felder pruefen")
+
+        sql = "select rzpDb from rzp_datenbanken order by sort"
+        rzpDatenbanken = self.db.execSelect(sql, '')
+
+        for rzpDb in rzpDatenbanken:
+            self.line.append("  Scenario Outline: Datenbank " + rzpDb['rzpDb'] + " pruefen")
 
 
-        line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
-        line.append("    When dieser Auftrag vollstaendig verarbeitet wurde")
-        line.append("    Then enthaelt in der Datenbank <zielDb> das Feld <zielFeld> den ggf. nach Regel <regel> konvertierten Wert <inhaltAuftrag>")
+            self.line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
+            self.line.append("    When dieser Auftrag in der Datenbank " + str(rzpDb['rzpDb']) + " gespeichert wurde")
+            self.line.append("    Then enthaelt die Datenbank " + str(rzpDb['rzpDb']) + " zum Auftragswert <inhaltAuftrag> im Feld <zielFeld> den SOLL-Wert <Soll-Ergebnis>")
 
-        line.append("")
+            self.line.append("")
 
-        line.append("    Examples:")
-        headerExampleTabelle = "    | " + str("zielDb").ljust(50, ' ') + "| " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(120, ' ') + "| " + str("regel").ljust(60, ' ') + "|"
-        line.append(headerExampleTabelle)
+            self.line.append("    Examples:")
+            headerExampleTabelle = "    | " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(50, ' ') + "| " + str("Soll-Ergebnis").ljust(50, ' ') + "| " + str("regel").ljust(20, ' ') + "|"
+            self.line.append(headerExampleTabelle)
 
 
-        mappingRegeln = self.readMapping("standard")
-        for regel in mappingRegeln:
-            feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, regel['feldAuftrag']).ljust(120)
+            pruefungen = self.readMapping("standard", rzpDb['rzpDb'])
+            for pruefung in pruefungen:
+                try:
+                    feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
+                    if feldInhaltAuftrag.strip() == "":
+                        feldInhaltAuftrag = "<leer>"
+                except:
+                    print("hier stimmt was nicht", feldInhaltAuftrag)
 
-            feldZielDb = regel['zielDb'].ljust(50, ' ')
-            feldZielFeld = regel['zielFeld'].ljust(60, ' ')
-            regel = regel['regel'].ljust(50, ' ')
-            line.append("    | " + feldZielDb + "| " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + regel + "|")
+                if feldInhaltAuftrag:
+                    if pruefung['regel'] != "-" or pruefung['regel'] != "":
+                        feldInhaltZiel = self.konvertierungsregel_anwenden(pruefung['regel'], feldInhaltAuftrag.strip())
+                    else:
+                        feldInhaltZiel = feldInhaltAuftrag.strip()
+                    feldInhaltAuftrag = feldInhaltAuftrag.ljust(50)
+                    feldZielFeld = pruefung['zielFeld'].ljust(60, ' ')
+                    feldInhaltZiel = feldInhaltZiel.ljust(50, ' ')
+                    regel = pruefung['regel'].ljust(20, ' ')
+                    self.line.append("    | " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + feldInhaltZiel + "| " + regel + "|")
+
+            self.line.append("")
+            self.line.append("")
+
+
+        #    linesScenarioRollen =  self.createFile_rollen(dictAuftrag)
+        #    line = self.line + linesScenarioRollen
+
 
 
         f = io.open('features/standard_' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
-        for zeile in line:
+        for zeile in self.line:
             f.write(zeile + "\n")
         f.close()
 
     def createFile_rollen(self, dictAuftrag):
         line = []
-        line.append("Feature: Pruefe Rollen - Transaktion: " + str(dictAuftrag['transaktionsId']))
+        line.append("")
+        line.append("")
         line.append("  Scenario Outline: Rollen pruefen")
 
         line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
-        line.append("    When dieser Auftrag vollstaendig verarbeitet wurde")
-        line.append("    Then enthaelt zur Rolle <rolle> in der Datenbank <zielDb> das Feld <zielFeld> den ggf. nach Regel <regel> konvertierten Wert <inhaltAuftrag>")
+        line.append("    Then wurde dieser Auftrag vollstaendig verarbeitet")
+        line.append("    And enthaelt die Rolle <rolle> in der Datenbank <zielDb> zum Auftragswert <inhaltAuftrag> im Feld <zielFeld> den SOLL-Wert <Soll-Ergebnis>")
 
         line.append("")
 
         line.append("    Examples:")
-        headerExampleTabelle = "    | " + str("inhaltAuftrag").ljust(120, ' ') + "| " + str("zielDb").ljust(50, ' ') + "| " + str("rolle").ljust(6, ' ') + "| " + str("zielFeld").ljust(60, ' ') + "| " + str("regel").ljust(60, ' ') + "|"
+        headerExampleTabelle = "    | " + str("rolle").ljust(30, ' ') + "| " + str("zielDb").ljust(30, ' ') + "| " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(50, ' ') + "| " + str("Soll-Ergebnis").ljust(50, ' ') + "| " + str("regel").ljust(20, ' ') + "|"
         line.append(headerExampleTabelle)
 
-        mappingRegeln = self.readMapping("rollen")
-        for regel in mappingRegeln:
-            feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, regel['feldAuftrag']).ljust(120)
-            #       print("Feldinhalt: " + feldInhaltAuftrag)
+        pruefungen = self.readMapping("rollen")
+        for pruefung in pruefungen:
+            try:
+                feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
+                if feldInhaltAuftrag.strip() == "":
+                    feldInhaltAuftrag = "<leer>"
+            except:
+                print("hier stimmt was nicht", feldInhaltAuftrag)
 
-            feldZielDb = regel['zielDb'].ljust(50, ' ')
-            feldZielFeld = regel['zielFeld'].ljust(60, ' ')
-            rolle = regel['rolle'].ljust(6, ' ')
-            regel = regel['regel'].ljust(50, ' ')
-            line.append("    | " + feldInhaltAuftrag + "| " + feldZielDb + "| " + rolle + "| " + feldZielFeld + "| " + regel + "|")
+            if feldInhaltAuftrag:
+                if pruefung['regel'] != "-" or pruefung['regel'] != "":
+                    feldInhaltZiel = self.konvertierungsregel_anwenden(pruefung['regel'], feldInhaltAuftrag.strip())
+                else:
+                    feldInhaltZiel = feldInhaltAuftrag.strip()
+                feldInhaltAuftrag = feldInhaltAuftrag.ljust(50)
 
-        f = io.open('features/rollen_' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
-        for zeile in line:
-            f.write(zeile + "\n")
-        f.close()
+                feldZielDb = pruefung['zielDb'].ljust(30, ' ')
+                feldZielFeld = pruefung['zielFeld'].ljust(60, ' ')
+                feldInhaltZiel = feldInhaltZiel.ljust(50, ' ')
+                rolle = pruefung['rolle'].ljust(30, ' ')
+                regel = pruefung['regel'].ljust(20, ' ')
+                line.append("    | " + rolle + "| " + feldZielDb + "| " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + feldInhaltZiel + "| " + regel + "|")
+
+        return line
 
     def ermittle_inhaltAuftrag(self, auftrag, zielfeld):
         listZielfeld = zielfeld.split(".")
         feldAuftrag = listZielfeld[0].lower() + "_" + listZielfeld[1]
         inhaltAuftrag = auftrag[feldAuftrag]
-        print(inhaltAuftrag)
         return inhaltAuftrag
+
+    def konvertierungsregel_anwenden(self, regel, inhaltAuftrag):
+        from datetime import datetime
+        if regel == "datum":
+            inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+        elif regel.lower() == "datum_yyyymm":
+            dataTemp = datetime.strptime(inhaltAuftrag, '%Y%m').date()
+            inhaltAuftrag = dataTemp.strftime('%Y-%m')
+        elif regel[:3].lower() == 'ps_':
+            feldAuftrag = regel[3:]
+            sql = "select distinct keyRzp from schluessel where feldAuftrag = '" + str(feldAuftrag) + "' and keyAuftrag = '" + str(inhaltAuftrag) + "'"
+            valueZiel = self.db.execSelect(sql, '')
+            try:
+                inhaltAuftrag = valueZiel[0]['keyRzp'].upper()
+            except:
+                inhaltAuftrag = "kein Mapping vorhanden für Wert " + str(inhaltAuftrag) + " in Feld " + str(feldAuftrag)
+            print(inhaltAuftrag)
+
+        return (str(inhaltAuftrag))
 
 if __name__ == "__main__":
     x = cls_create_featureFiles()
