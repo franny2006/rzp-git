@@ -8,12 +8,13 @@ class cls_create_featureFiles():
     def __init__(self):
         # Bestehende Feature-Files löschen
 
+    #    dirsToDelete = ['../features', '../export', '../export/reports', '../export/allure-results']
         dirsToDelete = ['features', 'export', 'export/reports', 'export/allure-results']
         for dir in dirsToDelete:
             for f in os.listdir(dir):
                 try:
                     if f.split(".")[1] in ('feature', 'json'):
-                        print(f)
+                     #   print(f)
                         os.remove(os.path.join(dir, f))
                 except:
                     pass
@@ -27,16 +28,15 @@ class cls_create_featureFiles():
         for dictAuftrag in auftraege:
 
             self.line = []
-            self.line.append("Feature: Pruefe Auftrag: " + str(dictAuftrag['transaktionsId']))
+            self.line.append("Feature: Pruefe Auftrag: "+ str(dictAuftrag['panr']) + " / " + str(dictAuftrag['prnr']) + " / " + str(dictAuftrag['voat']) + " - TId: " + str(dictAuftrag['transaktionsId']))
             self.createFile_standard(dictAuftrag)
 
        #     self.createFile_rollen(dictAuftrag)
     #    self.createFile()
-        pass
 
     def readAuftraege(self):
        # sql = "select panr, prnr, voat, lfdNr, transaktionsId from transaktionIds where anzFehler = 0"
-        sql = "select t.panr as t_panr, t.prnr as t_prnr, t.voat as t_voat, lfdNr, transaktionsId, v.* from transaktionIds t " \
+        sql = "select t.panr as t_panr, t.prnr as t_prnr, t.voat as t_voat, lfdNr, transaktionsId, zielwelt, v.* from transaktionIds t " \
               "left join V_DS10_komplett v " \
               "on v.panr = t.panr " \
               "and v.prnr = t.prnr " \
@@ -49,15 +49,18 @@ class cls_create_featureFiles():
 
     def readMapping(self, art, rzpDb):
         if art == "standard":
-            sql = "select * from gherkin_mapping where rolle is Null and zielDb = '" + rzpDb + "'"
+            sql = "select * from gherkin_mapping where rolle = '' and zielDb = '" + rzpDb + "'"
         elif art == "rollen":
-            sql = "select * from gherkin_mapping where rolle is not Null and zielDb = '" + rzpDb + "'"
+            sql = "select * from gherkin_mapping where rolle <> '' and zielDb = '" + rzpDb + "'"
         mappings = self.db.execSelect(sql, '')
         return mappings
 
     def createFile_standard(self, dictAuftrag):
 
-        sql = "select rzpDb from rzp_datenbanken order by sort"
+        if dictAuftrag['zielwelt'] == 'ALT':
+            sql = "select rzpDb from rzp_datenbanken where rzpDb like 'KUGA%' OR rzpDb like 'AAN%' or rzpDb like 'WCH%' order by sort"
+        else:
+            sql = "select rzpDb from rzp_datenbanken order by sort"
         rzpDatenbanken = self.db.execSelect(sql, '')
 
         for rzpDb in rzpDatenbanken:
@@ -77,12 +80,18 @@ class cls_create_featureFiles():
 
             pruefungen = self.readMapping("standard", rzpDb['rzpDb'])
             for pruefung in pruefungen:
-                try:
-                    feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
-                    if feldInhaltAuftrag.strip() == "":
-                        feldInhaltAuftrag = "<leer>"
-                except:
-                    print("hier stimmt was nicht", feldInhaltAuftrag)
+                feldInhaltAuftrag = ""
+                # konkreter Wert des Auftrags ermitteln
+                if pruefung['feldAuftrag'].split(".")[0] == "konkret":
+                    feldInhaltAuftrag = pruefung['feldAuftrag'].split(".")[1]
+                else:
+                    try:        # konkreter Wert des Auftrags ermitteln
+                        feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
+                        if feldInhaltAuftrag.strip() == "":
+                            feldInhaltAuftrag = "<leer>"
+                    except:
+                        print("hier stimmt was nicht",  pruefung['feldAuftrag'])
+
 
                 if feldInhaltAuftrag:
                     if pruefung['regel'] != "-" or pruefung['regel'] != "":
@@ -153,7 +162,9 @@ class cls_create_featureFiles():
     def ermittle_inhaltAuftrag(self, auftrag, zielfeld):
         listZielfeld = zielfeld.split(".")
         feldAuftrag = listZielfeld[0].lower() + "_" + listZielfeld[1]
+
         inhaltAuftrag = auftrag[feldAuftrag]
+        print("FeldAuftrag:", feldAuftrag, inhaltAuftrag)
         return inhaltAuftrag
 
     def konvertierungsregel_anwenden(self, regel, inhaltAuftrag):
@@ -171,7 +182,7 @@ class cls_create_featureFiles():
                 inhaltAuftrag = valueZiel[0]['keyRzp'].upper()
             except:
                 inhaltAuftrag = "kein Mapping vorhanden für Wert " + str(inhaltAuftrag) + " in Feld " + str(feldAuftrag)
-            print(inhaltAuftrag)
+      #      print(inhaltAuftrag)
 
         return (str(inhaltAuftrag))
 

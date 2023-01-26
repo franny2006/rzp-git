@@ -9,12 +9,14 @@ class cls_readAuftraege():
         self.db = cls_dbAktionen(herkunft)
 
     def read_Auftraege_uebersicht(self):
-        sql = "select za.*, rzp.*, ' ' as rolleZe, ' ' as rolleBe, ' ' as rolleMe, sa_90.buchungsKassenzeichenZahlungsempfaengerBVZE as titel1, sa_90.behoerdenaktenzeichenAKZESW as titel2 " \
+        sql = "select za.*, rzp.*, ' ' as rolleZe, ' ' as rolleBe, ' ' as rolleMe, sa_11.zunameZUNAME as jiraId, sa_11.vornameVORNAME as ziel, sa_14.adresszusatzZahlungsempfaengerADRZUS as titel " \
               "from (select a.runId, a.dsId, laufendeNummerZL, panr as za_panr, prnr as za_prnr, voat as za_voat, datei from sa_ft a, runs b where a.runId = b.Id) za " \
               "left join transaktionIds rzp " \
               " on za.za_panr = rzp.panr and za.za_prnr=rzp.prnr and za.za_voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr " \
-              "left join sa_90 " \
-              " on sa_90.runId = za.runId and sa_90.dsId = za.dsId"
+              "left join sa_14 " \
+              " on sa_14.runId = za.runId and sa_14.dsId = za.dsId " \
+              "left join sa_11 " \
+              " on sa_11.runId = za.runId and sa_11.dsId = za.dsId "
         auftraege = self.db.execSelect(sql, '')
         for auftrag in auftraege:
             if auftrag['za_voat'] in ('21'):

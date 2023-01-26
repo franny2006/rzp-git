@@ -2,18 +2,20 @@ import mysql.connector
 import sys
 import traceback
 from configparser import ConfigParser
+import os
+import pathlib
 
-#config = ConfigParser()
-#config.read('../config/config.ini')
 
 class cls_dbAktionen():
     def __init__(self, zieldb=None):
+        config_path = pathlib.Path(__file__).parent.absolute() / "../../config/config.ini"
+        print("config:", config_path)
         config = ConfigParser()
-        config.read('config/config.ini')
-        if config.get('Installation', 'lokal') == "True":
-            ziel = 'mysql Datenbank lokal'
+        config.read(config_path)
+        if config.get('Installation', 'zielumgebung').lower() == "local":
+            ziel = 'mysql Datenbank local'
         else:
-            ziel = 'mysql Datenbank Docker'
+            ziel = 'mysql Datenbank docker'
         configuration = {
             'user': config.get(ziel, 'user'),
             'password': config.get(ziel, 'pass'),

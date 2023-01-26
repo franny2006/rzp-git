@@ -1,12 +1,22 @@
 version: "3.1"
 services:
   app-gui:
-    build: ./app
+    image: rzp-cockpit
     depends_on:
       - db
     ports:
       - "5010:5000"
+    extra_hosts:
+      - "mft-mon-t0021.deutschepost.dpwn.com:100.64.1.84"
+      - "rzp-test-mongo-0001.npi.rs-rzp.deutschepost.de:100.64.1.89"
+      - "mft-kafka-t0011.deutschepost.dpwn.com:100.64.1.85"
+      - "mft-mon-t0022.deutschepost.dpwn.com:100.64.1.86"
+      - "rzp-test-mongo-0002.npi.rs-rzp.deutschepost.de:100.64.1.88"
+      - "rzp-test-mongo-0003.npi.rs-rzp.deutschepost.de:100.64.1.87"
+    dns_search: ''
     container_name: rzp-cockpit
+    volumes:
+      - C:/temp/rzp-cockpit/export:/app/export
   db:
     image: mariadb
     container_name: rzp-mysql
@@ -29,3 +39,15 @@ services:
       - "5011:80"
     depends_on:
       - db
+  allure:
+    image: "frankescobar/allure-docker-service"
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 1
+      KEEP_HISTORY: 1
+    ports:
+      - "5050:5050"
+    volumes:
+#      - C:/Users/Blindzellner/Dropbox/Fincon/Python-Projekte/rzp-git/app/export/allure-reports:/app/default-reports
+#      - C:/Users/Blindzellner/Dropbox/Fincon/Python-Projekte/rzp-git/app/export/allure-results:/app/allure-results
+      - C:/temp/rzp-cockpit/export/allure-reports:/app/default-reports
+      - C:/temp/rzp-cockpit/export/allure-results:/app/allure-results

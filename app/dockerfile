@@ -22,6 +22,9 @@ COPY /classes classes/
 COPY /templates templates/
 COPY /config config/
 COPY /export export/
+COPY /export/reports export/reports
+COPY /export/allure-reports export/allure-reports
+COPY /export/allure-results export/allure-results
 COPY /features features/
 COPY /uploads uploads/
 

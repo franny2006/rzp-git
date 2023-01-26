@@ -2,6 +2,7 @@
 
 {% block content %}
 
+
 <div class="container-fluid features">
     <p></p>
     <h3>Upload Auftragsdatei</h3>
@@ -23,6 +24,7 @@
             <th>BE</th>
             <th>ME</th>
             <th>Testziel</th>
+            <th>JiraId</th>
             <th>Auftragsdatei</th>
             <th>RZP-IDs</th>
             <th>Prüfergebnis</th>
@@ -30,6 +32,7 @@
             <th>Fehlercode</th>
             <th>Anz Hinweise</th>
             <th>Hinweiscode</th>
+            <th>Zielwelt</th>
             <th>KUGA</th>
             <th>AAN</th>
             <th>WCH</th>
@@ -38,8 +41,8 @@
             <th>REFUE</th>
             <th>REZA</th>
             <th>KAUS</th>
-            <th>Details</th>
-            <th>RZP-Daten holen</th>
+            <th>Auftrag</th>
+            <th>MongoDb's</th>
         </tr>
     </thead>
     <tbody>
@@ -54,8 +57,17 @@
             <td>{{ eintrag['rolleZe'] }}</td>
             <td>{{ eintrag['rolleBe'] }}</td>
             <td>{{ eintrag['rolleMe'] }}</td>
-            <td>{{ eintrag['titel1'] }} - {{ eintrag['titel2'] }}</td>
-            <td>{{ eintrag['datei'] }}</td>
+            <td>{% if eintrag['ziel'] != None %}
+                    {% if eintrag['ziel'][:3].lower() == "rzp" %}
+                        {% set ziel = "RZP" %}
+                    {% else %}
+                        {% set ziel = "REDS" %}
+                    {% endif %}
+                    {{ ziel }} - {{ eintrag['titel'] }}
+                {% endif %}</td>
+            <td>{{ eintrag['jiraId'] }}</td>
+            <td><center><button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#auftragsdatei" aria-expanded="false" aria-controls="auftragsdatei">File</button></center>
+                <div class="collapse" id="auftragsdatei"><div class="card card-body" style="white-space: nowrap;">{{ eintrag['datei'] }}</div></div></td>
             <td>
                 <center><button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#transaktionId" aria-expanded="false" aria-controls="transaktionId">ID</button></center>
                 <div class="collapse" id="transaktionId"><div class="card card-body" style="white-space: nowrap;">
@@ -83,70 +95,71 @@
             <td align="center">{{ eintrag['fehler'] }}</td>
             <td align="center">{{ eintrag['anzHinweise'] }}</td>
             <td align="center">{{ eintrag['hinweis'] }}</td>
+            <td align="center">{{ eintrag['zielwelt'] }}</td>
 
             {% if eintrag['kuga'] == "1" %}
-            <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KUGA&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+            <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KUGA&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['kuga_status'] }}">Dok</a></td>
             {% else %}
                 <td></td>
             {% endif %}
 
             {% if eintrag['aan'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['aan'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=AAN&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=AAN&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['aan_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['wch'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['wch'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=WCH&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=WCH&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['wch_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['perf_ident'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['perf_ident'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_IDENT&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_IDENT&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['perf_ident_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['perf_pers'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['perf_pers'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_PERS&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_PERS&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['perf_pers_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['refue'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['refue'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REFUE&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REFUE&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['refue_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['reza'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['reza'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REZA&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=REZA&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['reza_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
 
             {% if eintrag['kaus'] == "2" %}
-                <td align="center"><button class="btn btn-danger" type="submit">---</button></td>
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['kaus'] == "1" %}
-                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KAUS&transaktionsId={{ eintrag['transaktionsId'] }}">Dok</a></td>
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=KAUS&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['kaus_status'] }}">Dok</a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}
-            <td><a class="btn btn-primary" role="button" href="/showAuftragDetails?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">Auftragsdetails</a></td>
-            <td><a class="btn btn-primary" role="button" href="/readRzp?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}">RZP-Daten</a></td>
+            <td align="center"><a href="/showAuftragDetails?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}"><img src="{{url_for('static', filename='information.png')}}" width="32" height="32" alt="RZP-Daten lesen"></a></td>
+            <td align="center"><a href="/readRzp?runId={{ eintrag['runId'] }}&dsId={{ eintrag['dsId'] }}"><img src="{{url_for('static', filename='databases.png')}}" width="32" height="32" alt="RZP-Daten lesen"></a></td>
         </tr>
         {% endfor %}
         </tbody>

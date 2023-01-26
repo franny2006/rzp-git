@@ -43,6 +43,230 @@
 			"regel": "-"
 		},
 		{
+			"feldAuftrag": "SA_FT.panr",
+			"zielDb": "AAN.order",
+			"zielFeld": "panr",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.prnr",
+			"zielDb": "AAN.order",
+			"zielFeld": "prnr",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.voat",
+			"zielDb": "AAN.order",
+			"zielFeld": "voat",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_15.iban",
+			"zielDb": "WCH.anliegen",
+			"zielFeld": "payload.auszahlungssteuerung.iban",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlzeitraumZLZR",
+			"zielDb": "WCH.anliegen",
+			"zielFeld": "payload.rentenrechnungsdaten.zahlzeitraum",
+			"rolle": "",
+			"regel": "ps_zahlzeitraumZLZR"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlterminZLTE",
+			"zielDb": "WCH.anliegen",
+			"zielFeld": "payload.rentenrechnungsdaten.zahltermin",
+			"rolle": "",
+			"regel": "ps_zahlterminZLTE"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbetragZLBT",
+			"zielDb": "WCH.anliegen",
+			"zielFeld": "payload.rentenrechnungsdaten.zahlbetrag",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbeginnZLBE",
+			"zielDb": "WCH.anliegen",
+			"zielFeld": "payload.rentenrechnungsdaten.zahlbeginn",
+			"rolle": "",
+			"regel": "datum_YYYYMM"
+		},
+		{
+			"feldAuftrag": "konkret.OUTBOUND",
+			"zielDb": "PERF_IDENT.identitaeten",
+			"zielFeld": "art",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_11.zunameZUNAME",
+			"zielDb": "PERF_PERS.personen",
+			"zielFeld": "name.nachname",
+			"rolle": "ze",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_11.vornameVORNAME",
+			"zielDb": "PERF_PERS.personen",
+			"zielFeld": "name.vorname",
+			"rolle": "ze",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.panr",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "postabrechnungsnummer",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_FT.prnr",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "postrentennummer",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_15.iban",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "zahlwegsangaben.iban",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.abgetrennteZahlungTLZL",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "abgetrennteZahlung",
+			"rolle": "",
+			"regel": "ps_abgetrennteZahlungTLZL"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbetragZLBT",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "zahlbetragEurocent",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.merkmalKostenabzugMMKO",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "kostenabzugsmerkmal",
+			"rolle": "",
+			"regel": "ps_merkmalKostenabzugMMKO"
+		},
+		{
+			"feldAuftrag": "SA_61.kindererziehungsleistungsbetragKLGBT",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "kindererziehungsleistungsbetrag",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerNationalitaetenschluesselNTSC",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "zahlland.nationalitaetsschluessel",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_90.buchungsKassenzeichenZahlungsempfaengerBVZE",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "kassenzeichen",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_90.behoerdenaktenzeichenAKZESW",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "aktenzeichen",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.leistungsartLEAT",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "leistungsart",
+			"rolle": "",
+			"regel": "ps_leistungsartLEAT"
+		},
+		{
+			"feldAuftrag": "SA_61.merkmalRentnerausweisMMRA",
+			"zielDb": "REFUE.LaufendeGeldleistung",
+			"zielFeld": "rentenausweismerkmal",
+			"rolle": "",
+			"regel": "ps_merkmalRentnerausweisMMRA"
+		},
+		{
+			"feldAuftrag": "SA_15.iban",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "kontoinhaber.iban",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlzeitraumZLZR",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahlzeitraum",
+			"rolle": "",
+			"regel": "ps_zahlzeitraumZLZR"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlterminZLTE",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahltermin",
+			"rolle": "",
+			"regel": "ps_zahlterminZLTE"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbetragZLBT",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "auszahlungsbetrag",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.zahlbeginnZLBE",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahlbeginn",
+			"rolle": "",
+			"regel": "datum_YYYYMM"
+		},
+		{
+			"feldAuftrag": "SA_13.zahlungsempfaengerNationalitaetenschluesselNTSC",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "zahlland.nationalitaetsschluessel",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_61.abgetrennteZahlungTLZL",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "typ",
+			"rolle": "",
+			"regel": "ps_abgetrennteZahlungTLZL"
+		},
+		{
+			"feldAuftrag": "SA_90.buchungsKassenzeichenZahlungsempfaengerBVZE",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "kassenzeichen",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
+			"feldAuftrag": "SA_90.behoerdenaktenzeichenAKZESW",
+			"zielDb": "REZA.Geldleistungskonten",
+			"zielFeld": "aktenzeichen",
+			"rolle": "",
+			"regel": "-"
+		},
+		{
 			"feldAuftrag": "SA_11.anredeschluesselANREDSC",
 			"zielDb": "KAUS.Kundeninformation",
 			"zielFeld": "berechtigter.name.anrede",
@@ -139,55 +363,6 @@
 			"zielFeld": "geldleistung.zahlzeitraum",
 			"rolle": "",
 			"regel": "ps_zahlzeitraumZLZR"
-		},
-		{
-			"feldAuftrag": "SA_15.iban",
-			"zielDb": "REZA.Geldleistungskonten",
-			"zielFeld": "kontoinhaber.iban",
-			"rolle": "",
-			"regel": "-"
-		},
-		{
-			"feldAuftrag": "SA_61.zahlzeitraumZLZR",
-			"zielDb": "REZA.Geldleistungskonten",
-			"zielFeld": "zahlzeitraum",
-			"rolle": "",
-			"regel": "ps_zahlzeitraumZLZR"
-		},
-		{
-			"feldAuftrag": "SA_61.zahlterminZLTE",
-			"zielDb": "REZA.Geldleistungskonten",
-			"zielFeld": "zahltermin",
-			"rolle": "",
-			"regel": "ps_zahlterminZLTE"
-		},
-		{
-			"feldAuftrag": "SA_61.zahlbetragZLBT",
-			"zielDb": "REZA.Geldleistungskonten",
-			"zielFeld": "auszahlungsbetrag",
-			"rolle": "",
-			"regel": "-"
-		},
-		{
-			"feldAuftrag": "SA_61.zahlbeginnZLBE",
-			"zielDb": "REZA.Geldleistungskonten",
-			"zielFeld": "SA_61.zahlbeginnZLBE",
-			"rolle": "",
-			"regel": "datum_YYYYMM"
-		},
-		{
-			"feldAuftrag": "SA_11.zunameZUNAME",
-			"zielDb": "PERF_PERS.personen",
-			"zielFeld": "name.nachname",
-			"rolle": "ze",
-			"regel": ""
-		},
-		{
-			"feldAuftrag": "SA_11.vornameVORNAME",
-			"zielDb": "PERF_PERS.personen",
-			"zielFeld": "name.vorname",
-			"rolle": "ze",
-			"regel": ""
 		}
 	]
 }

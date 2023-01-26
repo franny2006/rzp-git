@@ -60,8 +60,7 @@ print(uuidConv)
 cursor = connColl.find({})
 
 result = connColl.find({})
-for r in result:
-    print("...", r)
+#
 #result = connColl.find_one({'transaktionsId': uuid.UUID("d620d31b-a922-40f2-bf76-aaa668148e7d")})
 print("Warum???", result)
 
@@ -82,7 +81,7 @@ for rolle in rollen:
         "fachlicherStatus": "FREIGEGEBEN",
         "transaktionsId": uuid.UUID(transaktionsId)})
 
-    print("Result", listResult)
+ #   print("Result", listResult)
     #print("Identität:", listResult['identitaetenId'])
 
     listResult = connColl.find_one({
@@ -90,4 +89,9 @@ for rolle in rollen:
         "identitaetenId": uuid.UUID('7c46e87d-823d-46c5-a59c-dd3e8651d5d2')},
                  sort=[("_id", pymongo.DESCENDING)])
 
-    print("Result", listResult)
+#   print("Result", listResult)
+
+sollErgebnis = "000000"
+sollErgebnisI = "000000"
+sollErgebnis = sollErgebnis.lstrip("0")
+print("srip", sollErgebnis, sollErgebnis.strip(), int(sollErgebnisI))

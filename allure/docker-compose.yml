@@ -11,4 +11,4 @@ services:
       - C:/Users/Blindzellner/Dropbox/Fincon/Python-Projekte/rzp-git/app/export/allure-reports:/app/default-reports
       - C:/Users/Blindzellner/Dropbox/Fincon/Python-Projekte/rzp-git/app/export/allure-results:/app/allure-results
 #      - C:/temp/rzp-cockpit/export/allure-reports:/app/default-reports
-#      - C:/temp/rzp-cockpit/export/allure-results:/app/allure-results
+#     - C:/temp/rzp-cockpit/export/allure-results:/app/allure-results

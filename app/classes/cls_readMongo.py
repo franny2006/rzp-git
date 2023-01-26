@@ -16,10 +16,10 @@ class cls_readMongo():
     def __init__(self):
         config = ConfigParser()
         config.read('config/config.ini')
-        if config.get('Installation', 'lokal') == "True":
-            ziel = 'mongo-db-config lokal'
+        if config.get('Installation', 'zielumgebung').lower() == "local":
+            ziel = 'mongo-db-config local'
         else:
-            ziel = 'mongo-db-config Docker'
+            ziel = 'mongo-db-config docker'
         with open(config.get(ziel, 'configfile')) as json_file:
             self.configData = json.load(json_file)
 
@@ -43,7 +43,7 @@ class cls_readMongo():
             {'keyValue.allgemeinerTeil.voat': voat},
             {'keyValue.allgemeinerTeil.laufendeNummerZL': lfdNr},
             {'panr': panr}
-        ]})
+        ]}, sort=[('_id', pymongo.DESCENDING)])
 
 
         statusAnliegen = {'_id': '', 'pruefergebnis': '', 'transaktionsId': 'None'}
@@ -88,7 +88,7 @@ class cls_readMongo():
 
             self.writeTransaktionsId(statusAnliegen)
             # Speichern der TransaktionsId
-            self.writeStatusApp("KUGA", "1", listResults['_id'])
+            self.writeStatusApp("KUGA", "1", listResults['_id'], '')
 
 
 
@@ -119,6 +119,7 @@ class cls_readMongo():
         connColl = connDb[connInfos['collection']]
         transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
         rollenList = []
+        anzRollenExistent = 0
         for rolle in rollen:
         #    listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
             listResult = connColl.find_one({
@@ -145,14 +146,20 @@ class cls_readMongo():
                     'personId': str(personId)
                 }
                 rollenList.append(rolleDict)
+                anzRollenExistent = anzRollenExistent + 1
+
+        if anzRollenExistent == 0:
+            self.writeStatusApp("PERF_IDENT", "2", transaktionsId, '')
+            self.writeStatusApp("PERF_PERS", "2", transaktionsId, '')
 
         return rollenList
 
 
 
-    def readApplication(self, transaktionsId, appName, nameTransaktionsId, rolle, nameId2, id2, nameSortfield):
-        connInfos = self.readConnectionInfos(appName)
+    def readApplication(self, appName, transaktionsId, id2, rolle):
+        dbInfos = self.readDbInfos(appName)
 
+        connInfos = self.readConnectionInfos(appName)
         connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
         opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
 
@@ -161,30 +168,102 @@ class cls_readMongo():
 
         if appName in ("AAN"):
             result = connColl.find_one(
-                {nameTransaktionsId: transaktionsId},
-                 sort=[(nameSortfield, pymongo.DESCENDING)])
+                {dbInfos['feldIdentifizierung_1']: transaktionsId},
+                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
         elif appName in ("PERF_IDENT", "PERF_PERS"):
             transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
             result = connColl.find_one(
-                {nameTransaktionsId: UUID(transaktionsId),
-                 nameId2: UUID(id2)},
-                 sort=[(nameSortfield, pymongo.DESCENDING)])
+                {dbInfos['feldIdentifizierung_1']: UUID(transaktionsId),
+                 dbInfos['feldIdentifizierung_2']: UUID(id2)},
+                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
         else:                                                       # KAUS, WCH, REZA, REFUE
             result = connColl.find_one(
-                {nameTransaktionsId: UUID(transaktionsId)},
-                 sort=[(nameSortfield, pymongo.DESCENDING)])
-            if (appName == "REFUE"):
-                print(nameTransaktionsId, uuid.UUID(transaktionsId), nameId2, id2)
-                print("result:", result)
+                {dbInfos['feldIdentifizierung_1']: UUID(transaktionsId)},
+                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
 
         if result:
             # Speichern des Dokuments
-            self.saveDocument(appName, transaktionsId, rolle, nameId2, id2, result)
+            self.saveDocument(appName, transaktionsId, rolle, dbInfos['feldIdentifizierung_2'], id2, result)
+            statusDok = self.readStatus(appName, transaktionsId, dbInfos['feldStatus'], result)
 
-            # Speichern des Status, wenn Transaktion in KAUS gefunden wurde
-            self.writeStatusApp(appName, "1", transaktionsId)
+            # Speichern des Status, wenn Transaktion gefunden wurde
+            self.writeStatusApp(appName, "1", transaktionsId, statusDok)
         else:
-            self.writeStatusApp(appName, "2", transaktionsId)
+            self.writeStatusApp(appName, "2", transaktionsId, '')
+
+    def readDbInfos(self, appName):
+        sql_valuelist = [appName + '%']
+        sql = "select * from rzp_datenbanken where rzpDb like %s"
+        dbInfos = self.db.execSelect(sql, sql_valuelist)
+        return dbInfos[0]
+
+    def readStatus(self, appName, transaktionsId, feldStatus, result):
+        try:
+            status = result[feldStatus]
+            try:
+                if appName in ("WCH", "KAUS"):
+                    if isinstance(status, list):
+                        anzStatus = len(status)
+                        status = status[anzStatus-1]['status']
+            except:
+                print("Statusermittlung fehlgeschlagen", appName)
+                status = "n.v."
+        except:
+            status = "Feld " + feldStatus + " nicht in Dokument gefunden"
+
+        # Sonderfall Zielwelt WCH
+        if appName == "WCH":
+            zielwelt = result['routing']['zielwelt']
+            sql_updateZielwelt = "update transaktionIds set zielwelt = '" + zielwelt + "' where transaktionsId = '" + transaktionsId + "'"
+            self.db.execSql(sql_updateZielwelt, '')
+
+        return status
+
+    def readStatusZielwelt(self, transaktionsId):
+        sql_valueList = [transaktionsId]
+        sql_readZielwelt = "select zielwelt from transaktionIds where transaktionsId = (%s)"
+        zielwelt = self.db.execSelect(sql_readZielwelt, sql_valueList)
+        return zielwelt[0]
+
+    def saveDocument(self, herkunft, transaktionsId, rolle, nameId2, id2, result):
+        # Speichern des Dokuments
+        self.db = cls_dbAktionen()
+        document = json.dumps(result, cls=myEncoder, ensure_ascii=False)
+        if nameId2 is None:
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
+            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+        else:
+            if herkunft == "PERF_IDENT":
+                art = "identitaetenId"
+            elif herkunft == "PERF_PERS":
+                art = "personId"
+
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
+            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+    #    print(sql_writeDokument)
+        self.db.execSql(sql_writeDokument, '')
+
+    def writeStatusApp(self, appName, status, transaktionsId, statusDok):
+        self.db = cls_dbAktionen()
+        sql = "update transaktionIds set " + str(appName).lower() + " = '" + status + "', " + str(appName).lower() + "_status" + " = '" + statusDok + "' where transaktionsId = '" + transaktionsId + "'"
+     #   print("Update Status", sql)
+        self.db.execSql(sql, '')
+
+
+    def readConnectionInfos(self, database):
+        connInfos = {}
+        for connection in self.configData['connection']:
+            if connection['connectionName'].lower() == database.lower():
+                connInfos['connString'] = connection['connectionString']
+                connInfos['db'] = connection['database']
+                connInfos['collection'] = connection['collection']
+        return connInfos
+
+
+
+
+
+
 
 
     def readKaus(self, transaktionsId):
@@ -266,39 +345,7 @@ class cls_readMongo():
 
             #    self.db.execSql(sql, sql_valuelist)
 
-    def saveDocument(self, herkunft, transaktionsId, rolle, nameId2, id2, result):
-        # Speichern des Dokuments
-        self.db = cls_dbAktionen()
-        document = json.dumps(result, cls=myEncoder, ensure_ascii=False)
-        if nameId2 is None:
-            sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
-            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-        else:
-            if herkunft == "PERF_IDENT":
-                art = "identitaetenId"
-            elif herkunft == "PERF_PERS":
-                art = "personId"
 
-            sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
-            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-    #    print(sql_writeDokument)
-        self.db.execSql(sql_writeDokument, '')
-
-    def writeStatusApp(self, appName, status, transaktionsId):
-        self.db = cls_dbAktionen()
-        sql = "update transaktionIds set " + str(appName).lower() + " = '" + status + "' where transaktionsId = '" + transaktionsId + "'"
-     #   print("Update Status", sql)
-        self.db.execSql(sql, '')
-
-
-    def readConnectionInfos(self, database):
-        connInfos = {}
-        for connection in self.configData['connection']:
-            if connection['connectionName'].lower() == database.lower():
-                connInfos['connString'] = connection['connectionString']
-                connInfos['db'] = connection['database']
-                connInfos['collection'] = connection['collection']
-        return connInfos
 
 
 from uuid import UUID

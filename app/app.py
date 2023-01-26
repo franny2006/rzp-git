@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template, redirect, flash, jso
 import requests
 import json
 import os
+from configparser import ConfigParser
 
 # from formulare import conForm, collForm
 from pymongo import MongoClient
@@ -20,13 +21,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 
 readAuftraege = cls_readAuftraege()
 
-try:
-    with open('c:/temp/mongo-poc/config.json') as json_file:
-        data = json.load(json_file)
-except:
-    with open('config/config.json') as json_file:
-        data = json.load(json_file)
-listConnections = []
+
 
 
 @app.route('/', methods=['GET'])
@@ -129,41 +124,43 @@ def readRzp():
         transaktionsId = connMongo.readTransaktionsId(dictAuftragUnique[0]['panr'], dictAuftragUnique[0]['prnr'], dictAuftragUnique[0]['voat'], dictAuftragUnique[0]['lfdNr'])
 
         if transaktionsId['transaktionsId'] != 'None':
-
-            # Identitaeten- und PersonenIds für alle Rollen ermitteln
-            identitaeten_personen_ids = connMongo.readRollenIds(transaktionsId['transaktionsId'])
-         #   print(identitaeten_personen_ids)
-
-            # Daten aus KAUS holen
-            kaus = connMongo.readKaus(transaktionsId['transaktionsId'])
-
             #AAN
-            aan = connMongo.readApplication(transaktionsId['transaktionsId'], "AAN", "transaktionsId", None, None, None, "sequenz")
-            wch = connMongo.readApplication(transaktionsId['transaktionsId'], "WCH", "payload.transaktionsId", None, None, None, "_id")
-            refue = connMongo.readApplication(transaktionsId['transaktionsId'], "REFUE", "transaktionsId", None, None, None, "_id")
-            reza = connMongo.readApplication(transaktionsId['transaktionsId'], "REZA", "transaktionsId", None, None, None, "_id")
+            aan = connMongo.readApplication("AAN", transaktionsId['transaktionsId'], None, None)
+            wch = connMongo.readApplication("WCH", transaktionsId['transaktionsId'], None, None)
 
-            # Identität und Person pro Rolle
-            for rolle in identitaeten_personen_ids:
-                if rolle['rolle'] == "ze":
-                    rolle_postfix = "ze"
-                    idIdentBez = "identitaetenId_ze"
-                    idPersonBez = "personId_ze"
-                elif rolle['rolle'] == "be":
-                    rolle_postfix = "be"
-                    idIdentBez = "identitaetenId_be"
-                    idPersonBez = "personId_be"
-                elif rolle['rolle'] == "me":
-                    rolle_postfix = "me"
-                    idIdentBez = "identitaetenId_me"
-                    idPersonBez = "personId_me"
-                elif rolle['rolle'] == "ki":
-                    rolle_postfix = "ki"
-                    idIdentBez = "identitaetenId_ki"
-                    idPersonBez = "personId_ki"
+            # Ermittle Zielwelt
+            zielwelt = connMongo.readStatusZielwelt(transaktionsId['transaktionsId'])
 
-                perf_ident = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_IDENT", "transaktionsId", rolle['rolle'], "identitaetenId", rolle['identitaetenId'], "_id")
-                perf_pers = connMongo.readApplication(transaktionsId['transaktionsId'], "PERF_PERS", "transaktionsId", rolle['rolle'], "personId", rolle['personId'], "_id")
+
+            if zielwelt['zielwelt'] == "NEU":
+                # Identitaeten- und PersonenIds für alle Rollen ermitteln
+                identitaeten_personen_ids = connMongo.readRollenIds(transaktionsId['transaktionsId'])
+
+                refue = connMongo.readApplication("REFUE", transaktionsId['transaktionsId'], None, None)
+                reza = connMongo.readApplication("REZA", transaktionsId['transaktionsId'], None, None)
+                kaus = connMongo.readApplication("KAUS", transaktionsId['transaktionsId'], None, None)
+
+                # Identität und Person pro Rolle
+                for rolle in identitaeten_personen_ids:
+                    if rolle['rolle'] == "ze":
+                        rolle_postfix = "ze"
+                        idIdentBez = "identitaetenId_ze"
+                        idPersonBez = "personId_ze"
+                    elif rolle['rolle'] == "be":
+                        rolle_postfix = "be"
+                        idIdentBez = "identitaetenId_be"
+                        idPersonBez = "personId_be"
+                    elif rolle['rolle'] == "me":
+                        rolle_postfix = "me"
+                        idIdentBez = "identitaetenId_me"
+                        idPersonBez = "personId_me"
+                    elif rolle['rolle'] == "ki":
+                        rolle_postfix = "ki"
+                        idIdentBez = "identitaetenId_ki"
+                        idPersonBez = "personId_ki"
+
+                    perf_ident = connMongo.readApplication("PERF_IDENT", transaktionsId['transaktionsId'], rolle['identitaetenId'], rolle['rolle'])
+                    perf_pers = connMongo.readApplication("PERF_PERS", transaktionsId['transaktionsId'], rolle['personId'], rolle['rolle'])
 
 
     return redirect('/showAuftraege')
@@ -180,23 +177,26 @@ def showVergleichsreport():
  #   os.system('behave -f allure_behave.formatter:AllureFormatter -o ./allure-results')
     report = open('export/reports/results.json')
     vergleichsReport = json.load(report)
-#    vergleichsReport = [{}]
-#    for report in vergleichsReport:
-#        for scenario in report['elements']:
-#            print("Scenario: ", scenario['keyword'], scenario['name'], scenario['status'])
-#            for steps in scenario['steps']:
-#                print("Steps: ", steps['keyword'], steps['name'], steps['result']['status'])
-#                if steps['result']['status'] == "failed":
-#                    print("Fehler:", steps['result']['error_message'])
 
-#            print("*****************************************************************************************************************************************")
 
     return render_template('showVergleichsreport.html', title="Vergleichsreport", data=json.dumps(vergleichsReport, sort_keys = False, indent = 4, ensure_ascii=False))
+
+
+
+
+config = ConfigParser()
+config.read('config/config.ini')
+if config.get('Installation', 'zielumgebung').lower() == "local":
+    ziel = 'mongo-db-config local'
+else:
+    ziel = 'mongo-db-config docker'
+
+with open(config.get(ziel, 'configfile')) as json_file:
+    data = json.load(json_file)
 
 @app.route('/viewConnections', methods=['GET', 'POST'])
 def viewConnections():
     listConnections = []
-    print("Conn in View:", listConnections)
     return render_template('viewConnections.html', title="Verbindungsübersicht", data=data['connection'])
 
 @app.route('/checkConnection', methods=['GET', 'POST'])

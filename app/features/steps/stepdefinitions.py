@@ -3,7 +3,7 @@ import json
 from cls_db import cls_dbAktionen
 
 db = cls_dbAktionen()
-rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA']
+rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA', 'REFUE']
 
 @given('Es wurde eine Auftragsdatei eingespielt')
 def step_init(context):
@@ -66,12 +66,12 @@ def step_verifyFelder(context, zielDb, zielFeld, inhaltAuftrag, sollErgebnis):
 
     listBetragsfelder = ['betrag', 'euro']
     if any(ele in zielFeld for ele in listBetragsfelder):
-        sollErgebnis = sollErgebnis.lstrip("0")
+        sollErgebnis = int(sollErgebnis)
 
-    if sollErgebnis.strip() == "<leer>":
-        assert feldInhaltDokument == "Feld nicht vorhanden" or feldInhaltDokument == "", f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
+    if str(sollErgebnis).strip() == "<leer>":
+        assert feldInhaltDokument == "Feld nicht vorhanden" or feldInhaltDokument == "", f'SOLL: ' + str(sollErgebnis).strip() + ' - IST: ' + str(feldInhaltDokument)
     else:
-        assert str(sollErgebnis.strip()) == str(feldInhaltDokument), f'SOLL: ' + str(sollErgebnis.strip()) + ' - IST: ' + str(feldInhaltDokument)
+        assert str(sollErgebnis).strip() == str(feldInhaltDokument), f'SOLL: ' + str(sollErgebnis).strip() + ' - IST: ' + str(feldInhaltDokument)
 
 
 
