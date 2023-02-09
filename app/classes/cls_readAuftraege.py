@@ -10,31 +10,35 @@ class cls_readAuftraege():
 
     def read_Auftraege_uebersicht(self):
         sql = "select za.*, rzp.*, ' ' as rolleZe, ' ' as rolleBe, ' ' as rolleMe, sa_11.zunameZUNAME as jiraId, sa_11.vornameVORNAME as ziel, sa_14.adresszusatzZahlungsempfaengerADRZUS as titel " \
-              "from (select a.runId, a.dsId, laufendeNummerZL, panr as za_panr, prnr as za_prnr, voat as za_voat, datei from sa_ft a, runs b where a.runId = b.Id) za " \
+              "from (select a.runId, a.dsId, laufendeNummerZL, panr as za_panr, prnr as za_prnr, voat as za_voat, b.datei as za_datei, b.sendungsnummer as za_sendungsnummer from sa_ft a, runs b where a.runId = b.Id) za " \
               "left join transaktionIds rzp " \
               " on za.za_panr = rzp.panr and za.za_prnr=rzp.prnr and za.za_voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr " \
               "left join sa_14 " \
               " on sa_14.runId = za.runId and sa_14.dsId = za.dsId " \
               "left join sa_11 " \
               " on sa_11.runId = za.runId and sa_11.dsId = za.dsId "
-        auftraege = self.db.execSelect(sql, '')
-        for auftrag in auftraege:
-            if auftrag['za_voat'] in ('21'):
-                rollen = self.read_Rollen_Auftrag(auftrag['runId'], auftrag['dsId'])
+        try:
+            auftraege = self.db.execSelect(sql, '')
+            for auftrag in auftraege:
+                if auftrag['za_voat'] in ('21'):
+                    rollen = self.read_Rollen_Auftrag(auftrag['runId'], auftrag['dsId'])
 
-                auftrag['rolleZe'] = rollen['rolleZe']
-                auftrag['rolleBe'] = rollen['rolleBe']
-                auftrag['rolleMe'] = rollen['rolleMe']
-            else:
-                auftrag['rolleZe'] = ""
-                auftrag['rolleBe'] = ""
-                auftrag['rolleMe'] = ""
-                #    print("Auftraege: ", auftraege)
+                    auftrag['rolleZe'] = rollen['rolleZe']
+                    auftrag['rolleBe'] = rollen['rolleBe']
+                    auftrag['rolleMe'] = rollen['rolleMe']
+                else:
+                    auftrag['rolleZe'] = ""
+                    auftrag['rolleBe'] = ""
+                    auftrag['rolleMe'] = ""
+                        #    print("Auftraege: ", auftraege)
+        except:
+            # DB vermutlich noch nicht initialisiert
+            auftraege = []
         return auftraege
 
 
     def read_Auftrag(self, runId, dsId):
-        sql = "select za.*, rzp.* from (select * from V_DS10_komplett where runId = " + runId + " and dsId = " + dsId + ") za " \
+        sql = "select za.*, rzp.* from (select * from V_DS10_komplett v, runs r where v.runId = r.id and v.runId = " + runId + " and v.dsId = " + dsId + ") za " \
               "left join transaktionIds rzp on " \
               "za.panr = rzp.panr and za.prnr=rzp.prnr and za.voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr"
         auftrag = self.db.execSelect(sql, '')
@@ -70,16 +74,23 @@ class cls_readAuftraege():
         return rollen[0]
 
     def read_AuftragStatusApps(self, runId, dsId):
-        sql = "select za.*, rzp.* from (select panr, prnr, voat, laufendeNummerZl from V_DS10_komplett where runId = " + runId + " and dsId = " + dsId + ") za " \
+        sql = "select za.*, rzp.* from (select panr, prnr, voat, laufendeNummerZl from sa_ft where runId = " + str(runId) + " and dsId = " + str(dsId) + ") za " \
               "left join transaktionIds rzp on " \
               "za.panr = rzp.panr and za.prnr=rzp.prnr and za.voat=rzp.voat and za.laufendeNummerZl = rzp.lfdNr"
         status = self.db.execSelect(sql, '')
         return status
 
     def read_Auftrag_Unique(self, runId, dsId):
-        sql = "select panr, prnr, voat, laufendeNummerZL as lfdNr from V_DS10_komplett where runId = " + runId + " and dsId = " + dsId
+        sql = "select panr, prnr, voat, laufendeNummerZL as lfdNr from sa_ft where runId = " + runId + " and dsId = " + dsId
         auftragUnique = self.db.execSelect(sql, '')
         return auftragUnique
+
+    def read_Auftrag_TransaktionsId(self, auftrag):
+        sql = "select transaktionsId from transaktionsId where runId = " + auftrag['runId'] + " and dsId = " + auftrag['dsId'] + \
+              " and datei = " + auftrag['datei'] + " and sendungsnummer = " + auftrag['sendungsnummer'] + " and panr = " + auftrag['panr'] + \
+              " and prnr = " + auftrag['prnr'] + " and voat = " + auftrag['voat'] + " and lfdNr = " + auftrag['lfdNr']
+        result = self.db.execSelect(sql, '')
+        return result['transaktionsId']
 
     def read_document(self, herkunft, transaktionsId):
         sql = "select * from documents where herkunft = '" + herkunft + "' and transaktionsId = '" + transaktionsId + "'"

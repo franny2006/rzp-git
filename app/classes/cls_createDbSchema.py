@@ -16,6 +16,7 @@ class cls_createSchema():
         self.createTables()
         self.createView()
         self.createTableGherkin_Mappings()
+        self.createTablInitCollections()
         self.createTableSchluessel()
         self.createTableRzpDatenbanken()
 
@@ -24,14 +25,14 @@ class cls_createSchema():
     def createTableRuns(self):
         sql = "drop table if exists runs"
         self.db.execSql(sql, '')
-        sql = "CREATE TABLE IF NOT EXISTS runs (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, datei varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+        sql = "CREATE TABLE IF NOT EXISTS runs (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, datei varchar(255), sendungsnummer varchar(10), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
         self.db.execSql(sql, '')
 
     def createTableTransaktionsId(self):
         sql = "drop table if exists transaktionIds"
         self.db.execSql(sql, '')
         sql = "CREATE TABLE IF NOT EXISTS transaktionIds " \
-              "(panr varchar(4), prnr varchar(14), voat varchar(2), lfdNr varchar(8), " \
+              "(datei varchar(150), sendungsnummer varchar(10), panr varchar(4), prnr varchar(14), voat varchar(2), lfdNr varchar(8), " \
               "transaktionsId varchar(36), identitaetenId_ze varchar(36), personId_ze varchar(36), identitaetenId_be varchar(36), personId_be varchar(36), " \
               "identitaetenId_me varchar(36), personId_me varchar(36), identitaetenId_ki varchar(36), personId_ki varchar(36), " \
               "pruefergebnis varchar(50), anzHinweise varchar(5), hinweis varchar(5), anzFehler varchar(5), fehler varchar(5), zielwelt varchar(10), " \
@@ -61,12 +62,20 @@ class cls_createSchema():
         self.db.execSql(sql, '')
         sqlInsertList = ["insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KUGA.Anliegen', 1, '_id', '_id', 'statushistorie')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('AAN.order', 2, 'transaktionsId', 'sequenz', 'metadaten.statushistorie')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('WCH.anliegen', 3, 'payload.transaktionsId', '_id', 'statusHistorie')",
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('WCH.anliegen', 3, 'payload.transaktionsId', 'kontext.markierung', 'statusHistorie')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldIdentifizierung_2, feldSortierung, feldStatus) values ('PERF_IDENT.identitaeten', 4, 'transaktionsId', 'identitaetenId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldIdentifizierung_2, feldSortierung, feldStatus) values ('PERF_PERS.personen', 5, 'transaktionsId', 'personId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REFUE.LaufendeGeldleistung', 6, 'transaktionsId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REZA.Geldleistungskonten', 7, 'transaktionsId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KAUS.Kundeninformation', 8, 'transaktionsId', '_id', 'kundeninformationStatusListe')"]
+        for sqlInsert in sqlInsertList:
+            self.db.execSql(sqlInsert, '')
+
+    def createTablInitCollections(self):
+        sql = "CREATE TABLE IF NOT EXISTS init_collections (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, collection varchar(255), zielDb varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+        self.db.execSql(sql, '')
+        sqlInsertList = ["insert into init_collections (collection, zielDb) values ('test', 'AAN')",
+                         "insert into init_collections (collection, zielDb) values ('test2', 'TransaktionsId')"]
         for sqlInsert in sqlInsertList:
             self.db.execSql(sqlInsert, '')
 

@@ -11,6 +11,7 @@ from base64 import b64encode, b64decode
 from configparser import ConfigParser
 
 from .cls_db import cls_dbAktionen
+from .cls_readAuftraege import cls_readAuftraege
 
 class cls_readMongo():
     def __init__(self):
@@ -23,8 +24,8 @@ class cls_readMongo():
         with open(config.get(ziel, 'configfile')) as json_file:
             self.configData = json.load(json_file)
 
-    def readTransaktionsId(self, panr, prnr, voat, lfdNr):
-   #     print(self.configData)
+    def readTransaktionsIds(self, listAuftraege):
+        #     print(self.configData)
         connString = ""
         db = ""
         collection = ""
@@ -36,70 +37,109 @@ class cls_readMongo():
 
         connClient = MongoClient(connString)
         connDb = connClient[db]
-        connColl = connDb[collection]
+        readAuftraege = cls_readAuftraege()
 
-        listResults = connColl.find_one({'$and': [
-            {'keyValue.allgemeinerTeil.prnr': prnr},
-            {'keyValue.allgemeinerTeil.voat': voat},
-            {'keyValue.allgemeinerTeil.laufendeNummerZL': lfdNr},
-            {'panr': panr}
-        ]}, sort=[('_id', pymongo.DESCENDING)])
+        for auftrag in listAuftraege:
+            dictAuftragUnique = readAuftraege.read_Auftrag_Unique(str(auftrag['runId']), str(auftrag['dsId']))
 
+            sendungsnummer = auftrag['sendungsnummer']
+            datei = auftrag['datei']
+            panr = dictAuftragUnique[0]['panr']
+            prnr = dictAuftragUnique[0]['prnr']
+            voat = dictAuftragUnique[0]['voat']
+            lfdNr = dictAuftragUnique[0]['lfdNr']
 
-        statusAnliegen = {'_id': '', 'pruefergebnis': '', 'transaktionsId': 'None'}
-        anzHinweise = 0
-        listHinweise = [{'hinweisCode': '', 'hinweisText': ''}]
-        anzFehler = 0
-        listFehler = [{'fehlerCode': '', 'fehlerText': ''}]
+            # Eindeutige LieferungsId passend zur Sendungsnummer ermitteln
+            connColl = connDb["lieferung"]
+            listResultsLieferungen = connColl.find_one({
+                '$and': [
+                    {
+                        'sendungsnummer': sendungsnummer},
+                    {
+                        'dateiname': datei}
+                ]}, sort=[('_id', pymongo.DESCENDING)])
 
-        if listResults:
-            if listResults['fehler']:
-                listFehler = []
-                anzFehler=len(listResults['fehler'])
-                for fehler in listResults['fehler']:
-                    dictFehler = {}
-                    dictFehler['fehlerCode'] = fehler['empfaengercode']
-                    dictFehler['fehlerText'] = fehler['bezeichner']
-                    listFehler.append(dictFehler)
-            if listResults['hinweise']:
-                listHinweise = []
-                anzHinweise=len(listResults['hinweise'])
-                for hinweis in listResults['hinweise']:
-                    dictHinweise = {}
-                    dictHinweise['hinweisCode'] = hinweis['empfaengercode']
-                    dictHinweise['hinweisText'] = hinweis['bezeichner']
-                    listHinweise.append(dictHinweise)
+            lieferungsId = ""
+            if listResultsLieferungen:
+                lieferungsId = listResultsLieferungen['_id']
+
+            # Transaktionsnummer aus Collection "anliegen" zur LieferungsId ermitteln
+            connColl = connDb[collection]
+
+            listResults = connColl.find_one({
+                '$and': [
+                    {
+                        'lieferungUuid': lieferungsId},
+                    {
+                        'keyValue.allgemeinerTeil.prnr': prnr},
+                    {
+                        'keyValue.allgemeinerTeil.voat': voat},
+                    {
+                        'keyValue.allgemeinerTeil.laufendeNummerZL': lfdNr},
+                    {
+                        'panr': panr}
+                ]}, sort=[('_id', pymongo.DESCENDING)])
+
             statusAnliegen = {
-                'panr': panr,
-                'prnr': prnr,
-                'voat': voat,
-                'lfdNr': lfdNr,
-                'transaktionsId': listResults['_id'],
-                'pruefergebnis': listResults['pruefergebnis'],
-                'anzHinweise': anzHinweise,
-                'hinweis1': listHinweise[0]['hinweisCode'],
-                'anzFehler': anzFehler,
-                'fehler1': listFehler[0]['fehlerCode']}
+                '_id': '',
+                'pruefergebnis': '',
+                'transaktionsId': 'None'}
+            anzHinweise = 0
+            listHinweise = [{
+                                'hinweisCode': '',
+                                'hinweisText': ''}]
+            anzFehler = 0
+            listFehler = [{
+                              'fehlerCode': '',
+                              'fehlerText': ''}]
+
+            if listResults:
+                if listResults['fehler']:
+                    listFehler = []
+                    anzFehler = len(listResults['fehler'])
+                    for fehler in listResults['fehler']:
+                        dictFehler = {}
+                        dictFehler['fehlerCode'] = fehler['empfaengercode']
+                        dictFehler['fehlerText'] = fehler['bezeichner']
+                        listFehler.append(dictFehler)
+                if listResults['hinweise']:
+                    listHinweise = []
+                    anzHinweise = len(listResults['hinweise'])
+                    for hinweis in listResults['hinweise']:
+                        dictHinweise = {}
+                        dictHinweise['hinweisCode'] = hinweis['empfaengercode']
+                        dictHinweise['hinweisText'] = hinweis['bezeichner']
+                        listHinweise.append(dictHinweise)
+                statusAnliegen = {
+                    'datei': datei,
+                    'sendungsnummer': sendungsnummer,
+                    'panr': panr,
+                    'prnr': prnr,
+                    'voat': voat,
+                    'lfdNr': lfdNr,
+                    'transaktionsId': listResults['_id'],
+                    'pruefergebnis': listResults['pruefergebnis'],
+                    'anzHinweise': anzHinweise,
+                    'hinweis1': listHinweise[0]['hinweisCode'],
+                    'anzFehler': anzFehler,
+                    'fehler1': listFehler[0]['fehlerCode']}
+
+                # Speichern des Dokuments
+                #     print(listResults)
+                self.saveDocument("KUGA", listResults['_id'], None, None, None, listResults)
+
+                self.writeTransaktionsId(statusAnliegen)
+                # Speichern der TransaktionsId
+                self.writeStatusApp("KUGA", "1", listResults['_id'], '')
 
 
-            # Speichern des Dokuments
-       #     print(listResults)
-            self.saveDocument("KUGA", listResults['_id'], None, None, None, listResults)
-
-            self.writeTransaktionsId(statusAnliegen)
-            # Speichern der TransaktionsId
-            self.writeStatusApp("KUGA", "1", listResults['_id'], '')
-
-
-
-        return statusAnliegen
 
     def writeTransaktionsId(self, statusAnliegen):
         self.db = cls_dbAktionen()
 
-        sql_valuelist = [str(statusAnliegen['panr']), str(statusAnliegen['prnr']), str(statusAnliegen['voat']), str(statusAnliegen['lfdNr']),
+        sql_valuelist = [str(statusAnliegen['datei']), str(statusAnliegen['sendungsnummer']), str(statusAnliegen['panr']), str(statusAnliegen['prnr']), str(statusAnliegen['voat']), str(statusAnliegen['lfdNr']),
                          str(statusAnliegen['transaktionsId']), str(statusAnliegen['pruefergebnis']), str(statusAnliegen['anzHinweise']), str(statusAnliegen['hinweis1']), str(statusAnliegen['anzFehler']), str(statusAnliegen['fehler1'])]
-        sql = "insert into transaktionIds (panr, prnr, voat, lfdNr, transaktionsid, pruefergebnis, anzHinweise, hinweis, anzFehler, fehler) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) " \
+        sql = "insert into transaktionIds (datei, sendungsnummer, panr, prnr, voat, lfdNr, transaktionsid, pruefergebnis, anzHinweise, hinweis, anzFehler, fehler) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) " \
               "ON DUPLICATE KEY UPDATE " \
               "transaktionsid='" + str(statusAnliegen['transaktionsId']) + "', " \
               "pruefergebnis='" + str(statusAnliegen['pruefergebnis']) + "', " \
@@ -107,89 +147,107 @@ class cls_readMongo():
               "hinweis='" + str(statusAnliegen['hinweis1']) + "', " \
               "anzFehler='" + str(statusAnliegen['anzFehler']) + "', " \
               "fehler='" + str(statusAnliegen['fehler1']) + "'"
-        # print("Schreiben der TransaktionsId: ", sql, sql_valuelist)
+      #  print("Schreiben der TransaktionsId: ", sql, sql_valuelist)
         self.db.execSql(sql, sql_valuelist)
 
-    def readRollenIds(self, transaktionsId):
+    def readApplication(self, appName, listAuftraege, id2, rolle):
+        dbInfos = self.readDbInfos(appName)
+
+        connInfos = self.readConnectionInfos(appName)
+        connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
+        opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
+        connDb = connClient[connInfos['db']]
+        connColl = connDb[connInfos['collection']]
+
+        for auftrag in listAuftraege:
+            if auftrag['transaktionsId'] != None:
+
+                if appName in ("AAN"):
+                    result = connColl.find_one(
+                        {
+                            dbInfos['feldIdentifizierung_1']: auftrag['transaktionsId']},
+                        sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
+
+
+
+                elif appName in ("PERF_IDENT", "PERF_PERS"):
+                    if appName == "PERF_IDENT":
+                        id2 = 'identitaetenId_' + str(rolle)
+                    else:
+                        id2 = 'personId_' + str(rolle)
+
+                    if auftrag[id2] != None:
+                        transaktionsIdConv = b64encode(uuid.UUID(auftrag['transaktionsId']).bytes).decode()
+                        result = connColl.find_one(
+                            {
+                                dbInfos['feldIdentifizierung_1']: UUID(auftrag['transaktionsId']),
+                                dbInfos['feldIdentifizierung_2']: UUID(auftrag[id2])},
+                            sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
+                    else:
+                        result = None
+
+                else:  # KAUS, WCH, REZA, REFUE
+                    result = connColl.find_one(
+                        {
+                            dbInfos['feldIdentifizierung_1']: UUID(auftrag['transaktionsId'])},
+                        sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
+
+                if result:
+                    # Speichern des Dokuments
+                    self.saveDocument(appName, auftrag['transaktionsId'], rolle, dbInfos['feldIdentifizierung_2'], id2, result)
+                    statusDok = self.readStatus(appName, auftrag['transaktionsId'], dbInfos['feldStatus'], result)
+
+                    # Speichern des Status, wenn Transaktion gefunden wurde
+                    self.writeStatusApp(appName, "1", auftrag['transaktionsId'], statusDok)
+                else:
+                    self.writeStatusApp(appName, "2", auftrag['transaktionsId'], '')
+
+
+
+    def readRollenIds(self, listAuftraege):
         rollen = ['RZP_BERECHTIGTER', 'RZP_ZAHLUNGSEMPFAENGER', 'RZP_MITTEILUNGSEMPFAENGER', 'RZP_KONTOINHABER']
         connInfos = self.readConnectionInfos('PERF_IDENT')
         connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
         opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
         connDb = connClient[connInfos['db']]
         connColl = connDb[connInfos['collection']]
-        transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
-        rollenList = []
-        anzRollenExistent = 0
-        for rolle in rollen:
-        #    listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
-            listResult = connColl.find_one({
-                                           "rollen": rolle,
-                                           "art": "OUTBOUND",
-                                           "fachlicherStatus": "FREIGEGEBEN",
-                                           "transaktionsId": UUID(transaktionsId)})
-            if listResult:
-                identitaetenId = listResult['identitaetenId']
-                personId = listResult['personId']
-                if rolle == "RZP_BERECHTIGTER":
-                    postfix = "be"
-                elif rolle == "RZP_ZAHLUNGSEMPFAENGER":
-                    postfix = "ze"
-                elif rolle == "RZP_MITTEILUNGSEMPFAENGER":
-                    postfix = "me"
-                elif rolle == "RZP_KONTOINHABER":
-                    postfix = "ki"
-                sqlUpdateRollen = "update transaktionIds set identitaetenId_" + str(postfix) + " = '" + str(identitaetenId) + "', personId_" + str(postfix) + " = '" + str(personId) + "' where transaktionsId = '" + str(transaktionsId) + "'"
-                self.db.execSql(sqlUpdateRollen, '')
-                rolleDict = {
-                    'rolle': postfix,
-                    'identitaetenId': str(identitaetenId),
-                    'personId': str(personId)
-                }
-                rollenList.append(rolleDict)
-                anzRollenExistent = anzRollenExistent + 1
 
-        if anzRollenExistent == 0:
-            self.writeStatusApp("PERF_IDENT", "2", transaktionsId, '')
-            self.writeStatusApp("PERF_PERS", "2", transaktionsId, '')
+        for auftrag in listAuftraege:
+            transaktionsIdConv = b64encode(uuid.UUID(auftrag['transaktionsId']).bytes).decode()
+            rollenList = []
+            anzRollenExistent = 0
+            for rolle in rollen:
+            #    listResult = connColl.find_one({"rollen": rolle,  "art": "OUTBOUND", "fachlicherStatus": "FREIGEGEBEN", "transaktionsId.binary.base64": transaktionsIdConv})
+                listResult = connColl.find_one({
+                                               "rollen": rolle,
+                                               "art": "OUTBOUND",
+                                               "fachlicherStatus": "FREIGEGEBEN",
+                                               "transaktionsId": UUID(auftrag['transaktionsId'])})
+                if listResult:
+                    identitaetenId = listResult['identitaetenId']
+                    personId = listResult['personId']
+                    if rolle == "RZP_BERECHTIGTER":
+                        postfix = "be"
+                    elif rolle == "RZP_ZAHLUNGSEMPFAENGER":
+                        postfix = "ze"
+                    elif rolle == "RZP_MITTEILUNGSEMPFAENGER":
+                        postfix = "me"
+                    elif rolle == "RZP_KONTOINHABER":
+                        postfix = "ki"
+                    sqlUpdateRollen = "update transaktionIds set identitaetenId_" + str(postfix) + " = '" + str(identitaetenId) + "', personId_" + str(postfix) + " = '" + str(personId) + "' where transaktionsId = '" + str(auftrag['transaktionsId']) + "'"
+                    self.db.execSql(sqlUpdateRollen, '')
+                    rolleDict = {
+                        'rolle': postfix,
+                        'identitaetenId': str(identitaetenId),
+                        'personId': str(personId)
+                    }
+                    rollenList.append(rolleDict)
+                    anzRollenExistent = anzRollenExistent + 1
 
-        return rollenList
+            if anzRollenExistent == 0:
+                self.writeStatusApp("PERF_IDENT", "2", auftrag['transaktionsId'], '')
+                self.writeStatusApp("PERF_PERS", "2", auftrag['transaktionsId'], '')
 
-
-
-    def readApplication(self, appName, transaktionsId, id2, rolle):
-        dbInfos = self.readDbInfos(appName)
-
-        connInfos = self.readConnectionInfos(appName)
-        connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
-        opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
-
-        connDb = connClient[connInfos['db']]
-        connColl = connDb[connInfos['collection']]
-
-        if appName in ("AAN"):
-            result = connColl.find_one(
-                {dbInfos['feldIdentifizierung_1']: transaktionsId},
-                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
-        elif appName in ("PERF_IDENT", "PERF_PERS"):
-            transaktionsIdConv = b64encode(uuid.UUID(transaktionsId).bytes).decode()
-            result = connColl.find_one(
-                {dbInfos['feldIdentifizierung_1']: UUID(transaktionsId),
-                 dbInfos['feldIdentifizierung_2']: UUID(id2)},
-                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
-        else:                                                       # KAUS, WCH, REZA, REFUE
-            result = connColl.find_one(
-                {dbInfos['feldIdentifizierung_1']: UUID(transaktionsId)},
-                 sort=[(dbInfos['feldSortierung'], pymongo.DESCENDING)])
-
-        if result:
-            # Speichern des Dokuments
-            self.saveDocument(appName, transaktionsId, rolle, dbInfos['feldIdentifizierung_2'], id2, result)
-            statusDok = self.readStatus(appName, transaktionsId, dbInfos['feldStatus'], result)
-
-            # Speichern des Status, wenn Transaktion gefunden wurde
-            self.writeStatusApp(appName, "1", transaktionsId, statusDok)
-        else:
-            self.writeStatusApp(appName, "2", transaktionsId, '')
 
     def readDbInfos(self, appName):
         sql_valuelist = [appName + '%']
@@ -213,9 +271,12 @@ class cls_readMongo():
 
         # Sonderfall Zielwelt WCH
         if appName == "WCH":
-            zielwelt = result['routing']['zielwelt']
-            sql_updateZielwelt = "update transaktionIds set zielwelt = '" + zielwelt + "' where transaktionsId = '" + transaktionsId + "'"
-            self.db.execSql(sql_updateZielwelt, '')
+            try:
+                zielwelt = result['routing']['zielwelt']
+                sql_updateZielwelt = "update transaktionIds set zielwelt = '" + zielwelt + "' where transaktionsId = '" + transaktionsId + "'"
+                self.db.execSql(sql_updateZielwelt, '')
+            except:
+                print("keine Routinginfos in WCH gefunden")
 
         return status
 
@@ -240,7 +301,8 @@ class cls_readMongo():
 
             sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
             "ON DUPLICATE KEY UPDATE document = '" + document + "'"
-    #    print(sql_writeDokument)
+ #       if transaktionsId == 'e1606b08-2343-432f-aa59-9b2413a439f2':
+ #           print("Write Dokument", sql_writeDokument)
         self.db.execSql(sql_writeDokument, '')
 
     def writeStatusApp(self, appName, status, transaktionsId, statusDok):
@@ -259,10 +321,18 @@ class cls_readMongo():
                 connInfos['collection'] = connection['collection']
         return connInfos
 
+    def deleteCollection(self):
+        self.db = cls_dbAktionen()
+        sql = "select * from init_collections"
+        collectionsToDelete = self.db.execSelect(sql, '')
 
-
-
-
+        for collToDelete in collectionsToDelete:
+            connInfos = self.readConnectionInfos(collToDelete['zielDb'])
+            connClient = MongoClient(connInfos['connString'], uuidRepresentation="standard")
+            opts = CodecOptions(uuid_representation=UuidRepresentation.PYTHON_LEGACY)
+            connDb = connClient[connInfos['db']]
+            connColl = connDb[collToDelete['collection']]
+            d = connColl.delete_many({})
 
 
 

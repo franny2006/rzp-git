@@ -5,7 +5,7 @@ from .cls_db import cls_dbAktionen
 
 
 class cls_parseZa():
-    def __init__(self, filepath):
+    def __init__(self, filepath, sendungsnummer):
         print("Filepath:", filepath)
         file = filepath
     #    file = filedialog.askopenfilename()
@@ -14,10 +14,10 @@ class cls_parseZa():
         self.db = cls_dbAktionen(herkunft)
 
         # Run anlegen
-        insertRun = "insert into runs (datei) values (%s)"
+        insertRun = "insert into runs (datei, sendungsnummer) values (%s, %s)"
         filename = os.path.split(file)[1]
         print("Dateiname: ", filename)
-        self.runId = self.db.execSql(insertRun, [filename,])
+        self.runId = self.db.execSql(insertRun, [filename, sendungsnummer])
         self.dsId = 0
         datei = {}
 

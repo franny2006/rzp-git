@@ -63,6 +63,7 @@ class cls_dbAktionen():
     #    mycursor.execute(statement)
     #    result = mycursor.fetchall()
         try:
+   #         print(statement)
             if val:
                 mycursor.execute(statement, val)
             else:

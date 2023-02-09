@@ -40,13 +40,20 @@
 
             <ul class="collapse navbar-collapse" id="navbarNavDropdown">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" aria-current="page" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" aria-current="page" href="/showAuftraege">Home</a></li>
                     <li class="nav-item"><a class="nav-link" aria-current="page" href="/readAuftragsdatei">Auftragsdatei einspielen</a></li>
                     <li class="nav-item"><a class="nav-link" aria-current="page" href="/showAuftraege">Auftraege anzeigen</a></li>
                     <li class="nav-item"><a class="nav-link" aria-current="page" href="/reset">Datenbank zurücksetzen</a></li>
-                    <li class="nav-item"><a class="nav-link" aria-current="page" href="/readMappings">Mappingregeln importieren</a></li>
                     <li class="nav-item"><a class="nav-link" aria-current="page" href="/showVergleichsreport">Ergebnisvergleich</a></li>
-                    <li class="nav-item"><a class="nav-link" aria-current="page" href="/viewConnections">Verbindungen prüfen</a></li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">Initialisierungen</a>
+                      <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                          <li><a class="dropdown-item" href="/viewConnections">Verbindungen zu MongoDbs prüfen</a></li>
+                          <li><a class="dropdown-item" href="/readCollectionsToInitialize">Init-Konfiguration importieren</a></li>
+                          <li><a class="dropdown-item" href="/initCollections">MongoDbs initialisieren</a></li>
+                          <li><a class="dropdown-item" href="/readMappings">Mappingregeln importieren</a></li>
+                      </ul>
+                    </li>
                 </ul>
             </ul>
         </ul>

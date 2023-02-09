@@ -1,0 +1,16 @@
+{
+  "collectionsToInit": [
+    {
+      "connectionName": "TransaktionsId",
+      "collection": "test"
+    },
+    {
+      "connectionName": "AAN",
+      "collection": "test"
+    },
+    {
+      "connectionName": "WCH",
+      "collection": "test"
+    }
+  ]
+}
