@@ -12,8 +12,9 @@
     </table>
 
     <table class="table table-striped table-bordered table-hover">
-    <thead class="thead-dark">
+    <thead style="position: sticky;top: 0" class="table-dark">
         <tr>
+            <th>Status</th>
             <th>Lauf</th>
             <th>lfd.Nr.</th>
             <th>PANR</th>
@@ -26,20 +27,17 @@
             <th>JiraId</th>
             <th>Auftragsdatei</th>
             <th>RZP-IDs</th>
-            <th>Prüfergebnis</th>
-            <th>Anz Fehler</th>
-            <th>Fehlercode</th>
-            <th>Anz Hinweise</th>
-            <th>Hinweiscode</th>
+            <th>Prüfergebnis EKL</th>
             <th>Zielwelt</th>
-            <th>KUGA</th>
-            <th>AAN</th>
-            <th>WCH</th>
-            <th>PERF-I</th>
-            <th>PERF-P</th>
-            <th>REFUE</th>
-            <th>REZA</th>
-            <th>KAUS</th>
+            <th class="text-center">KUGA</th>
+            <th class="text-center">AAN</th>
+            <th class="text-center">WCH</th>
+            <th class="text-center">PERF-I</th>
+            <th class="text-center">PERF-P</th>
+            <th class="text-center">RERE</th>
+            <th class="text-center">REFUE</th>
+            <th class="text-center">REZA</th>
+            <th class="text-center">KAUS</th>
             <th>Auftrag</th>
             <th>MongoDb's</th>
         </tr>
@@ -48,6 +46,15 @@
         {% for eintrag in data %}
 
         <tr>
+            <td align="center">
+                {% set status = status(eintrag['transaktionsId'], eintrag['ziel'], eintrag['zielwelt']) %}
+                {% if status == "ok" %}
+                    <img src="{{url_for('static', filename='icons8-green-circle-30.png')}}" width="30" height="30" alt="OK">
+                {% elif status == "nok" %}
+                    <img src="{{url_for('static', filename='icons8-orange-circle-30.png')}}" width="30" height="30" alt="NOK">
+                {% else %}
+                    <img src="{{url_for('static', filename='icons8-white-circle-30.png')}}" width="30" height="30" alt="n.d.">
+                {% endif %}</td>
             <td>{{ eintrag['runId'] }}</td>
             <td>{{ eintrag['laufendeNummerZL'] }}</td>
             <td>{{ eintrag['za_panr'] }}</td>
@@ -59,8 +66,10 @@
             <td>{% if eintrag['ziel'] != None %}
                     {% if eintrag['ziel'][:3].lower() == "rzp" %}
                         {% set ziel = "RZP" %}
-                    {% else %}
+                    {% elif eintrag['ziel'][:4].lower() == "reds" %}
                         {% set ziel = "REDS" %}
+                    {% else %}
+                        {% set ziel = "?" %}
                     {% endif %}
                     {{ ziel }} - {{ eintrag['titel'] }}
                 {% endif %}</td>
@@ -81,19 +90,13 @@
             </td>
             <td align="center">
                 {% if eintrag['pruefergebnis'] == "FEHLER" %}
-                    <button class="btn btn-danger" type="submit">
+                    <button class="btn btn-danger" type="submit">F {{ eintrag['fehler'] }} ({{ eintrag['anzFehler'] }})</button>
                 {% elif eintrag['pruefergebnis'] == "HINWEIS" %}
-                    <button class="btn btn-warning" type="submit">
+                    <button class="btn btn-warning" type="submit">H {{ eintrag['hinweis'] }} ({{ eintrag['anzHinweise'] }})</button>
                 {% elif eintrag['pruefergebnis'] == "OK" %}
-                    <button class="btn btn-success" type="submit">
+                    <button class="btn btn-success" type="submit">OK</button>
                 {% endif %}
-                {{ eintrag['pruefergebnis'] }}
-                    </button>
             </td>
-            <td align="center">{{ eintrag['anzFehler'] }}</td>
-            <td align="center">{{ eintrag['fehler'] }}</td>
-            <td align="center">{{ eintrag['anzHinweise'] }}</td>
-            <td align="center">{{ eintrag['hinweis'] }}</td>
             <td align="center">{{ eintrag['zielwelt'] }}</td>
 
             {% if eintrag['kuga'] == "1" %}
@@ -130,6 +133,14 @@
                 <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
             {% elif eintrag['perf_pers'] == "1" %}
                 <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=PERF_PERS&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['perf_pers_status'] }}"><img src="{{url_for('static', filename='dokument.png')}}" width="24" height="24" alt="RZP-Daten"></a></td>
+            {% else %}
+                <td align="center"></td>
+            {% endif %}
+
+            {% if eintrag['rere'] == "2" %}
+                <td align="center"><button class="btn btn-danger" type="submit">-</button></td>
+            {% elif eintrag['rere'] == "1" %}
+                <td align="center"><a class="btn btn-success" role="button" href="/readDocument?herkunft=RERE&transaktionsId={{ eintrag['transaktionsId'] }}" title="{{ eintrag['rere_status'] }}"><img src="{{url_for('static', filename='dokument.png')}}" width="24" height="24" alt="RZP-Daten"></a></td>
             {% else %}
                 <td align="center"></td>
             {% endif %}

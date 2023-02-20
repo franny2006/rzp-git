@@ -26,10 +26,15 @@ class cls_create_featureFiles():
 
 
         for dictAuftrag in auftraege:
+            # Voraussetzung für die Anwendung einer Regel prüfen
+            # Rollen:
+            dictRegelnToExecute = self.readRegelnToExecute(dictAuftrag)
+
 
             self.line = []
             self.line.append("Feature: Pruefe Auftrag: "+ str(dictAuftrag['panr']) + " / " + str(dictAuftrag['prnr']) + " / " + str(dictAuftrag['voat']) + " - TId: " + str(dictAuftrag['transaktionsId']))
-            self.createFile_standard(dictAuftrag)
+
+            self.createFile(dictAuftrag, dictRegelnToExecute)
 
        #     self.createFile_rollen(dictAuftrag)
     #    self.createFile()
@@ -47,15 +52,41 @@ class cls_create_featureFiles():
         auftraege = self.db.execSelect(sql, '')
         return auftraege
 
-    def readMapping(self, art, rzpDb):
-        if art == "standard":
-            sql = "select * from gherkin_mapping where rolle = '' and zielDb = '" + rzpDb + "'"
-        elif art == "rollen":
-            sql = "select * from gherkin_mapping where rolle <> '' and zielDb = '" + rzpDb + "'"
+    def readMapping(self, rzpDb, bedingung):
+        if bedingung == "":
+            sql = "select * from gherkin_mapping where bedingung = '' and zielDb = '" + rzpDb + "'"
+        else:
+            sql = "select * from gherkin_mapping where bedingung = '" + bedingung + "' and zielDb = '" + rzpDb + "'"
         mappings = self.db.execSelect(sql, '')
         return mappings
 
-    def createFile_standard(self, dictAuftrag):
+    def readRegelnToExecute(self, dictAuftrag):
+        dictRegelnToExecute = ['',]
+        # BE <> ZE
+        if dictAuftrag['sa_19_dsId'] != None:
+            dictRegelnToExecute.append('BE != ZE')
+        else:
+            dictRegelnToExecute.append('BE == ZE')
+
+        # Mitteilungsempfänger
+        if dictAuftrag['sa_m1_dsId'] != None:
+            dictRegelnToExecute.append('SAM1')
+        else:
+            if dictAuftrag['sa_19_dsId'] != None:
+                dictRegelnToExecute.append('keine SAM1 && BE != ZE')
+            else:
+                dictRegelnToExecute.append('keine SAM1 && BE == ZE')
+
+        # Kontoinhaber
+        if dictAuftrag['sa_17_dsId'] != None:
+            dictRegelnToExecute.append('SA17')
+        else:
+            dictRegelnToExecute.append('keine SA17 && BE == ZE')
+
+        print("DictRegeln: ", dictRegelnToExecute)
+        return dictRegelnToExecute
+
+    def createFile(self, dictAuftrag, bedingungen):
 
         if dictAuftrag['zielwelt'] == 'ALT':
             sql = "select rzpDb from rzp_datenbanken where rzpDb like 'KUGA%' OR rzpDb like 'AAN%' or rzpDb like 'WCH%' order by sort"
@@ -64,45 +95,57 @@ class cls_create_featureFiles():
         rzpDatenbanken = self.db.execSelect(sql, '')
 
         for rzpDb in rzpDatenbanken:
-            self.line.append("  Scenario Outline: Datenbank " + rzpDb['rzpDb'] + " pruefen")
+            self.line.append("  Scenario Outline: " + str(dictAuftrag['panr']) + " / "  + str(dictAuftrag['prnr']) + " / "  + str(dictAuftrag['voat']) + " in " + rzpDb['rzpDb'] + " pruefen")
 
 
             self.line.append("    Given Es wurde ein Auftrag mit PANR = " + str(dictAuftrag['panr']) + ", PRNR = " + str(dictAuftrag['prnr']) + ", VOAT = " + str(dictAuftrag['voat']) + ", lfdNr = " + str(dictAuftrag['lfdNr']) + ", TransaktionsId = " + str(dictAuftrag['transaktionsId']) + " eingespielt")
             self.line.append("    When dieser Auftrag in der Datenbank " + str(rzpDb['rzpDb']) + " gespeichert wurde")
-            self.line.append("    Then enthaelt die Datenbank " + str(rzpDb['rzpDb']) + " zum Auftragswert <inhaltAuftrag> im Feld <zielFeld> den SOLL-Wert <Soll-Ergebnis>")
+            self.line.append("    Then enthaelt die Datenbank " + str(rzpDb['rzpDb']) + " im Feld <zielFeld> den SOLL-Wert '<Soll-Ergebnis>'. Urspruenglicher Auftragswert: '<inhaltAuftrag>' aus Feld '<ursprung>'")
 
             self.line.append("")
 
             self.line.append("    Examples:")
-            headerExampleTabelle = "    | " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(50, ' ') + "| " + str("Soll-Ergebnis").ljust(50, ' ') + "| " + str("regel").ljust(20, ' ') + "|"
+            headerExampleTabelle = "    | " + str("zielFeld").ljust(60, ' ') + "| " + str("inhaltAuftrag").ljust(50, ' ') + "| " + str("Soll-Ergebnis").ljust(50, ' ') + "| " + str("ursprung").ljust(70, ' ') + "| " + str("regel").ljust(20, ' ') + "| " + str("bedingung").ljust(20, ' ') + "|"
             self.line.append(headerExampleTabelle)
 
-
-            pruefungen = self.readMapping("standard", rzpDb['rzpDb'])
-            for pruefung in pruefungen:
-                feldInhaltAuftrag = ""
-                # konkreter Wert des Auftrags ermitteln
-                if pruefung['feldAuftrag'].split(".")[0] == "konkret":
-                    feldInhaltAuftrag = pruefung['feldAuftrag'].split(".")[1]
-                else:
-                    try:        # konkreter Wert des Auftrags ermitteln
-                        feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
-                        if feldInhaltAuftrag.strip() == "":
-                            feldInhaltAuftrag = "<leer>"
-                    except:
-                        print("hier stimmt was nicht",  pruefung['feldAuftrag'])
-
-
-                if feldInhaltAuftrag:
-                    if pruefung['regel'] != "-" or pruefung['regel'] != "":
-                        feldInhaltZiel = self.konvertierungsregel_anwenden(pruefung['regel'], feldInhaltAuftrag.strip())
+            for bedingung in bedingungen:
+                pruefungen = self.readMapping(rzpDb['rzpDb'], bedingung)
+                for pruefung in pruefungen:
+                    feldInhaltAuftrag = ""
+                    # Regeln, die vor der Verarbeitung ausgeführ werden müssen
+                    if pruefung['regel'].lower() == "pre_concat":
+                        feld1 = pruefung['feldAuftrag'].split("+")[0].rstrip()
+                        feld2 = pruefung['feldAuftrag'].split("+")[1].lstrip()
+                        feldInhaltAuftrag1 = self.ermittle_inhaltAuftrag(dictAuftrag, feld1)
+                        feldInhaltAuftrag2 = self.ermittle_inhaltAuftrag(dictAuftrag, feld2)
+                        feldInhaltAuftrag = feldInhaltAuftrag1.strip() + " " + feldInhaltAuftrag2.strip()
                     else:
-                        feldInhaltZiel = feldInhaltAuftrag.strip()
-                    feldInhaltAuftrag = feldInhaltAuftrag.ljust(50)
-                    feldZielFeld = pruefung['zielFeld'].ljust(60, ' ')
-                    feldInhaltZiel = feldInhaltZiel.ljust(50, ' ')
-                    regel = pruefung['regel'].ljust(20, ' ')
-                    self.line.append("    | " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + feldInhaltZiel + "| " + regel + "|")
+                        # Wenn konkreter Wert geprüft werden soll (Präfix konkret.)
+                        if pruefung['feldAuftrag'].split(".")[0] == "konkret":
+                            feldInhaltAuftrag = pruefung['feldAuftrag'].split(".")[1]
+                        else:
+                            try:        # konkreter Wert des Auftrags ermitteln
+                                feldInhaltAuftrag = self.ermittle_inhaltAuftrag(dictAuftrag, pruefung['feldAuftrag'])
+                                if feldInhaltAuftrag is None:
+                                    feldInhaltAuftrag = "Feld nicht vorhanden"
+                                elif feldInhaltAuftrag.strip() == "":
+                                    feldInhaltAuftrag = "<leer>"
+                            except:
+                                print("hier stimmt was nicht",  pruefung['feldAuftrag'])
+
+
+                    if feldInhaltAuftrag:
+                        if pruefung['regel'] != "-" or pruefung['regel'] != "" or pruefung['regel'][:3].lower() == "pre":
+                            feldInhaltZiel = self.konvertierungsregel_anwenden(pruefung['regel'], feldInhaltAuftrag.strip())
+                        else:
+                            feldInhaltZiel = feldInhaltAuftrag.strip()
+                        feldInhaltAuftrag = feldInhaltAuftrag.ljust(50)
+                        feldZielFeld = pruefung['zielFeld'].ljust(60, ' ')
+                        feldInhaltZiel = feldInhaltZiel.ljust(50, ' ')
+                        feldInhaltUrsprung = pruefung['feldAuftrag'].ljust(70, ' ')
+                        regel = pruefung['regel'].ljust(20, ' ')
+                        bedingung = bedingung.ljust(20, ' ')
+                        self.line.append("    | " + feldZielFeld + "| " + feldInhaltAuftrag + "| " + feldInhaltZiel + "| " + feldInhaltUrsprung + "| " + regel + "| " + bedingung + "| ")
 
             self.line.append("")
             self.line.append("")
@@ -164,7 +207,7 @@ class cls_create_featureFiles():
         feldAuftrag = listZielfeld[0].lower() + "_" + listZielfeld[1]
 
         inhaltAuftrag = auftrag[feldAuftrag]
-        print("FeldAuftrag:", feldAuftrag, inhaltAuftrag)
+     #   print("FeldAuftrag:", feldAuftrag, inhaltAuftrag)
         return inhaltAuftrag
 
     def konvertierungsregel_anwenden(self, regel, inhaltAuftrag):

@@ -291,19 +291,22 @@ class cls_readMongo():
         self.db = cls_dbAktionen()
         document = json.dumps(result, cls=myEncoder, ensure_ascii=False)
         if nameId2 is None:
-            sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values ('" + herkunft + "', '" + transaktionsId + "', '" + document + "') " \
-            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+            valueList = [herkunft, transaktionsId, document]
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, document) values (%s, %s, %s) " \
+            "ON DUPLICATE KEY UPDATE document = values(document)"
+            self.db.execSql(sql_writeDokument, valueList)
         else:
             if herkunft == "PERF_IDENT":
                 art = "identitaetenId"
             elif herkunft == "PERF_PERS":
                 art = "personId"
 
-            sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values ('" + herkunft + "', '" + transaktionsId + "', '" + rolle + "', '" + id2 + "', '" + document + "') " \
-            "ON DUPLICATE KEY UPDATE document = '" + document + "'"
+            valueList = [herkunft, transaktionsId, rolle, id2, document]
+            sql_writeDokument = "insert into documents (herkunft, transaktionsId, rolle, " + art + ", document) values (%s, %s, %s, %s, %s) " \
+            "ON DUPLICATE KEY UPDATE document = values(document)"
  #       if transaktionsId == 'e1606b08-2343-432f-aa59-9b2413a439f2':
  #           print("Write Dokument", sql_writeDokument)
-        self.db.execSql(sql_writeDokument, '')
+            self.db.execSql(sql_writeDokument, valueList)
 
     def writeStatusApp(self, appName, status, transaktionsId, statusDok):
         self.db = cls_dbAktionen()

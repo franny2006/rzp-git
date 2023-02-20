@@ -38,6 +38,7 @@ class cls_dbAktionen():
 
     def execSql(self, statement, val):
         mycursor = self.mydb.cursor()
+        lastRowId = None
         try:
             if val:
                 mycursor.execute(statement, val)
@@ -54,6 +55,7 @@ class cls_dbAktionen():
                 print('MySql traceback: ')
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 print(traceback.format_exception(exc_type, exc_value, exc_tb))
+                print("SQL: ", statement, val)
 
         return lastRowId
 
@@ -78,6 +80,7 @@ class cls_dbAktionen():
                 print('SQLite traceback: ')
                 exc_type, exc_value, exc_tb = sys.exc_info()
                 print(traceback.format_exception(exc_type, exc_value, exc_tb))
+                print("SQL: ", statement, val)
 
         return result
 

@@ -37,7 +37,8 @@ class cls_createSchema():
               "identitaetenId_me varchar(36), personId_me varchar(36), identitaetenId_ki varchar(36), personId_ki varchar(36), " \
               "pruefergebnis varchar(50), anzHinweise varchar(5), hinweis varchar(5), anzFehler varchar(5), fehler varchar(5), zielwelt varchar(10), " \
               "kuga char(1), kuga_status varchar(255), aan char(1), aan_status varchar(255), wch char(1), wch_status varchar(255), " \
-              "perf_ident char(1), perf_ident_status varchar(255), perf_pers char(1), perf_pers_status varchar(255), refue char(1), refue_status varchar(255), " \
+              "perf_ident char(1), perf_ident_status varchar(255), perf_pers char(1), perf_pers_status varchar(255), " \
+              "rere char(1), rere_status varchar(255), refue char(1), refue_status varchar(255), " \
               "reza char(1), reza_status varchar(255), kaus char(1), kaus_status varchar(255), " \
               "ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, " \
               "PRIMARY KEY (panr, prnr, voat, lfdNr))"
@@ -65,9 +66,11 @@ class cls_createSchema():
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('WCH.anliegen', 3, 'payload.transaktionsId', 'kontext.markierung', 'statusHistorie')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldIdentifizierung_2, feldSortierung, feldStatus) values ('PERF_IDENT.identitaeten', 4, 'transaktionsId', 'identitaetenId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldIdentifizierung_2, feldSortierung, feldStatus) values ('PERF_PERS.personen', 5, 'transaktionsId', 'personId', '_id', 'fachlicherStatus')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REFUE.LaufendeGeldleistung', 6, 'transaktionsId', '_id', 'fachlicherStatus')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REZA.Geldleistungskonten', 7, 'transaktionsId', '_id', 'fachlicherStatus')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KAUS.Kundeninformation', 8, 'transaktionsId', '_id', 'kundeninformationStatusListe')"]
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('RERE.Rentenrechnungen', 6, 'transaktionsId', 'zeitstempel', 'fachlicherStatus')",
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REFUE.LaufendeGeldleistung', 7, 'transaktionsId', '_id', 'fachlicherStatus')",
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REZA.Geldleistungskonten', 8, 'transaktionsId', '_id', 'fachlicherStatus')",
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KAUS.Kundeninformation', 9, 'transaktionsId', '_id', 'kundeninformationStatusListe')",
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('RERE.Rentenrechnungen', 10, 'transaktionsId', 'zeitstempel', 'fachlicherStatus')"]
         for sqlInsert in sqlInsertList:
             self.db.execSql(sqlInsert, '')
 
@@ -89,7 +92,7 @@ class cls_createSchema():
         self.db.execSql(sql, '')
 
     def createTableGherkin_Mappings(self):
-        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), rolle char(2), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
+        sql = "CREATE TABLE IF NOT EXISTS gherkin_mapping (id INTEGER PRIMARY KEY AUTO_INCREMENT NOT NULL, feldAuftrag varchar(255), zielDb varchar(255), zielFeld varchar(255), bedingung char(255), regel varchar(255), ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)"
         self.db.execSql(sql, '')
 
 

@@ -11,8 +11,8 @@ class cls_readMappings():
             print(self.mappingData)
             for regel in self.mappingData['mappings']:
                 print(regel['feldAuftrag'], regel['zielDb'])
-                parameterList = [regel['feldAuftrag'], regel['zielDb'], regel['zielFeld'], regel['rolle'], regel['regel']]
-                sql = "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, rolle, regel) values (%s, %s, %s, %s, %s)"
+                parameterList = [regel['feldAuftrag'], regel['zielDb'], regel['zielFeld'], regel['bedingung'], regel['regel']]
+                sql = "insert into gherkin_mapping (feldAuftrag, zielDb, zielFeld, bedingung, regel) values (%s, %s, %s, %s, %s)"
                 self.db.execSql(sql, parameterList)
 
     def truncateTable(self, table):

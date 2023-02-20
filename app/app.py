@@ -26,6 +26,45 @@ readAuftraege = cls_readAuftraege()
 
 
 
+@app.context_processor
+def utilities():
+    def status(transaktionsId, zielweltSoll: str, zielweltIst: str):
+        if transaktionsId:
+            transaktionsStati = readAuftraege.read_transaktionsStatus(transaktionsId)
+            print("Stati:", transaktionsStati)
+            fehler = 0
+            if zielweltIst != None:
+                if zielweltSoll[:3].lower() == "rzp":
+                    if zielweltIst.lower() != "neu":
+                        fehler = fehler + 1
+                elif zielweltSoll[:4].lower() == "reds":
+                    if zielweltIst.lower() != "alt":
+                        fehler = fehler + 1
+            for collection, collStatus in transaktionsStati.items():
+                if collection.lower() not in ('zielwelt'):
+                    try:
+                        if transaktionsStati['zielwelt'].lower() == 'neu':
+                            if collStatus == None or int(collStatus) == 2:
+                                fehler = fehler + 1
+                        elif transaktionsStati['zielwelt'].lower() == 'alt':
+                            if collection in ('KUGA', 'AAN', 'AUA', 'WCH'):
+                                if collStatus == None or int(collStatus) == 2:
+                                    fehler = fehler + 1
+                    except:
+                        fehler = fehler +1
+
+
+            if fehler > 0:
+                status = "nok"
+            elif fehler == 0:
+                status = 'ok'
+            else:
+                status = "n.d."
+        else:
+            status = "leer"
+        return status
+    return dict(status=status)
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('base.html')
@@ -195,7 +234,7 @@ def readRzp():
     messpunkt6 = time.time()
     print("Messpunkt 6 Dokumente für alle Rollen abgeholt:", messpunkt6 - messpunkt5)
 
-
+    rere = connMongo.readApplication("RERE", listAuftraegeRzp, None, None)
     refue = connMongo.readApplication("REFUE", listAuftraegeRzp, None, None)
     reza = connMongo.readApplication("REZA", listAuftraegeRzp, None, None)
     kaus = connMongo.readApplication("KAUS", listAuftraegeRzp, None, None)
@@ -218,14 +257,15 @@ def showVergleichsreport():
     # Feature-Files erzeugen und Verzeichnisse leeren
     createFeatureFiles = cls_create_featureFiles()
 
-    os.system('behave features -f json.pretty -o export/reports/results.json')
+ #   os.system('behave features -f json.pretty -o export/reports/results.json')
     os.system('behave -f allure_behave.formatter:AllureFormatter -o export/allure-results/')
  #   os.system('behave -f allure_behave.formatter:AllureFormatter -o ./allure-results')
-    report = open('export/reports/results.json')
-    vergleichsReport = json.load(report)
+ #   report = open('export/reports/results.json')
+ #   vergleichsReport = json.load(report)
 
 
-    return render_template('showVergleichsreport.html', title="Vergleichsreport", data=json.dumps(vergleichsReport, sort_keys = False, indent = 4, ensure_ascii=False))
+  #  return render_template('showVergleichsreport.html', title="Vergleichsreport", data=json.dumps(vergleichsReport, sort_keys = False, indent = 4, ensure_ascii=False))
+    return redirect('/showAuftraege')
 
 
 

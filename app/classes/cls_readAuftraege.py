@@ -85,6 +85,23 @@ class cls_readAuftraege():
         auftragUnique = self.db.execSelect(sql, '')
         return auftragUnique
 
+    def read_rzpDatenbanken(self):
+        sql = "select * from rzp_datenbanken"
+        rzpDb = self.db.execSelect(sql, '')
+        return rzpDb
+
+    def read_transaktionsStatus(self, transaktionsId):
+        if transaktionsId:
+            datenbanken = self.read_rzpDatenbanken()
+            selection = ""
+            for db in datenbanken:
+                collection = db['rzpDB']
+                collection = collection.split('.')[0]
+                selection = selection + collection.lower() + ", "
+            sql = "select " + selection + "zielwelt from transaktionIds where transaktionsId = '" + transaktionsId + "'"
+            transaktionStati = self.db.execSelect(sql, '')
+            return transaktionStati[0]
+
     def read_Auftrag_TransaktionsId(self, auftrag):
         sql = "select transaktionsId from transaktionsId where runId = " + auftrag['runId'] + " and dsId = " + auftrag['dsId'] + \
               " and datei = " + auftrag['datei'] + " and sendungsnummer = " + auftrag['sendungsnummer'] + " and panr = " + auftrag['panr'] + \

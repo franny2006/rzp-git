@@ -3,7 +3,7 @@ import json
 from cls_db import cls_dbAktionen
 
 db = cls_dbAktionen()
-rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA', 'REFUE']
+rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'RERE', 'REZA', 'REFUE']
 
 @given('Es wurde eine Auftragsdatei eingespielt')
 def step_init(context):
@@ -36,26 +36,30 @@ def step_verarbeitungPruefen(context, zielDb):
     assert dbFehlt == "", f'Verarbeitung in Datenbank unvollständig: ' + dbFehlt
 
 
-@then("enthaelt die Datenbank {zielDb} zum Auftragswert {inhaltAuftrag} im Feld {zielFeld} den SOLL-Wert {sollErgebnis}")
-def step_verifyFelder(context, zielDb, zielFeld, inhaltAuftrag, sollErgebnis):
+@then("enthaelt die Datenbank {zielDb} im Feld {zielFeld} den SOLL-Wert '{sollErgebnis}'. Urspruenglicher Auftragswert: '{inhaltAuftrag}' aus Feld '{ursprung}'")
+def step_verifyFelder(context, zielDb, zielFeld, sollErgebnis, inhaltAuftrag, ursprung):
     # Dokumente ermitteln und in Dicts umwandeln
+
     listDokumente = []
-    for app in rzpDatenbanken:
-        sql = "select document from documents where transaktionsId = '" + context.transaktionsId + "' and herkunft = '" + app + "'"
-        resultDokument = db.execSelect(sql, '')
-        dokument = {}
-        dokument['herkunft'] = app
-        try:
-            dokument['dokument'] = resultDokument[0]['document'].decode()
-        except:
-            dokument['dokument'] = "{}"
-        listDokumente.append(dokument)
+  #  for app in rzpDatenbanken:
+  #      sql = "select document from documents where transaktionsId = '" + context.transaktionsId + "' and herkunft = '" + app + "'"
+    herkunft = zielDb.split('.')[0]
+    sql = "select document from documents where transaktionsId = '" + context.transaktionsId + "' and herkunft = '" + herkunft + "'"
+    resultDokument = db.execSelect(sql, '')
+    dokument = {}
+    dokument['herkunft'] = herkunft
+    try:
+        dokument['dokument'] = resultDokument[0]['document'].decode()
+    except:
+        dokument['dokument'] = "{}"
+    listDokumente.append(dokument)
  #   print(listDokumente[0]['herkunft'])
 
     # Vergleich der Inhalte aus Auftragsdaten und Dokumenten-Dict
     zielDb = zielDb.split(".")[0]
     zielFeldDict = splitZielfeld(zielFeld)
 
+    feldInhaltDokument = "nicht initialisiert"
     for dokument in listDokumente:
         if dokument['herkunft'] == zielDb:
             dictDokument = json.loads(dokument['dokument'])
@@ -64,9 +68,14 @@ def step_verifyFelder(context, zielDb, zielFeld, inhaltAuftrag, sollErgebnis):
             except:
                 feldInhaltDokument = "Feld nicht vorhanden"
 
-    listBetragsfelder = ['betrag', 'euro']
+
+    listBetragsfelder = ['betrag', 'euro', 'cent', 'rentenrechnungsdaten.zinsen', 'barzahlungskosten', 'rentenrechnungsdaten.abschlag', 'anzahl',
+                         'entschaedigungsrente', 'Betrag', 'aufwendungen', 'beitrag', 'Beitrag', 'bemessungsgrundlage', 'zuschlag', 'zahlKinder', 'zahlWaisen']
     if any(ele in zielFeld for ele in listBetragsfelder):
-        sollErgebnis = int(sollErgebnis)
+        try:
+            sollErgebnis = int(sollErgebnis)
+        except:
+            pass
 
     if str(sollErgebnis).strip() == "<leer>":
         assert feldInhaltDokument == "Feld nicht vorhanden" or feldInhaltDokument == "", f'SOLL: ' + str(sollErgebnis).strip() + ' - IST: ' + str(feldInhaltDokument)
