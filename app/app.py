@@ -34,12 +34,13 @@ def utilities():
             print("Stati:", transaktionsStati)
             fehler = 0
             if zielweltIst != None:
-                if zielweltSoll[:3].lower() == "rzp":
-                    if zielweltIst.lower() != "neu":
-                        fehler = fehler + 1
-                elif zielweltSoll[:4].lower() == "reds":
-                    if zielweltIst.lower() != "alt":
-                        fehler = fehler + 1
+                if zielweltSoll != None:
+                    if zielweltSoll[:3].lower() == "rzp":
+                        if zielweltIst.lower() != "neu":
+                            fehler = fehler + 1
+                    elif zielweltSoll[:4].lower() == "reds":
+                        if zielweltIst.lower() != "alt":
+                            fehler = fehler + 1
             for collection, collStatus in transaktionsStati.items():
                 if collection.lower() not in ('zielwelt'):
                     try:
@@ -249,16 +250,38 @@ def readRzp():
 
 
 
+@app.route('/executeTests')
+def executeTests():
+    return render_template('executeTests.html', title="Tests ausführen")
 
 
-@app.route('/showVergleichsreport')
+@app.route('/executeTests', methods=['POST'])
+def executeTests_submitted():
+    from classes.cls_createFeatureFiles import cls_create_featureFiles
+    from classes.cls_createExecutionReport import cls_createExecutionReport
+    # Feature-Files erzeugen und Verzeichnisse leeren
+    createFeatureFiles = cls_create_featureFiles()
+
+    reportType = request.form.get('reportType', False)
+    print("Report", reportType)
+    if reportType == "allure":
+        os.system('behave -f allure_behave.formatter:AllureFormatter -o export/allure-results/')
+    else:
+        os.system('behave features -f json.pretty -o export/reports/results.json')
+        report = cls_createExecutionReport()
+    return redirect('/showAuftraege')
+
+
+@app.route('/showVergleichsreport', methods=['POST'])
 def showVergleichsreport():
     from classes.cls_createFeatureFiles import cls_create_featureFiles
     # Feature-Files erzeugen und Verzeichnisse leeren
     createFeatureFiles = cls_create_featureFiles()
 
- #   os.system('behave features -f json.pretty -o export/reports/results.json')
+    os.system('behave features -f json.pretty -o export/reports/results.json')
     os.system('behave -f allure_behave.formatter:AllureFormatter -o export/allure-results/')
+
+
  #   os.system('behave -f allure_behave.formatter:AllureFormatter -o ./allure-results')
  #   report = open('export/reports/results.json')
  #   vergleichsReport = json.load(report)

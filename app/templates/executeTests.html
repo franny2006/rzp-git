@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container features">
+    <p></p>
+    <h3>Gherkin/Cucumber-Tests ausführen</h3>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+    <table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>Art des Reports</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Reporttyp währen</td>
+            <td><select id="reportType" name="reportType" size="1">
+                    <option value="allure">Allure Report</option>
+                    <option value="excel">Excel</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Testausführung starten"></td>
+        </tr>
+        </tbody>
+    </table>
+    </form>
+</div>
+
+
+
+
+{% endblock %}

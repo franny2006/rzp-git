@@ -69,8 +69,7 @@ class cls_createSchema():
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('RERE.Rentenrechnungen', 6, 'transaktionsId', 'zeitstempel', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REFUE.LaufendeGeldleistung', 7, 'transaktionsId', '_id', 'fachlicherStatus')",
                          "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('REZA.Geldleistungskonten', 8, 'transaktionsId', '_id', 'fachlicherStatus')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KAUS.Kundeninformation', 9, 'transaktionsId', '_id', 'kundeninformationStatusListe')",
-                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('RERE.Rentenrechnungen', 10, 'transaktionsId', 'zeitstempel', 'fachlicherStatus')"]
+                         "insert into rzp_datenbanken (rzpDb, sort, feldIdentifizierung_1, feldSortierung, feldStatus) values ('KAUS.Kundeninformation', 9, 'transaktionsId', '_id', 'kundeninformationStatusListe')"]
         for sqlInsert in sqlInsertList:
             self.db.execSql(sqlInsert, '')
 
@@ -106,7 +105,7 @@ class cls_createSchema():
         self.db.execSql(sql, '')
         sqlInsertList = ["insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '1', 'Herr')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '2', 'Frau')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '3', 'Fräulein')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '3', 'Fraeulein')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '4', 'Damen und Herren')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '5', 'Herren')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('anrede', '6', 'Damen')",
@@ -117,11 +116,11 @@ class cls_createSchema():
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '03', 'Braille_Langschrift')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '12', 'Bereitstellung als E-Mail')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '13', 'CD-ROM_Schriftdatei')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '22', 'Hörmedium_CD-ROM_DAISY')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('mmbarko', '22', 'Hoermedium_CD-ROM_DAISY')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '1', 'monatlich')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '3', 'vierteljährlich')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '6', 'halbjährlich')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '9', 'jährlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '3', 'vierteljaehrlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '6', 'halbjaehrlich')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('zahlzeitraumZLZR', '9', 'jaehrlich')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '14', 'Rente_wegen_teilweiser_Erwerbsminderung')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '15', 'Rente_wegen_voller_Erwerbsminderung')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('leistungsartLEAT', '16', 'Regelaltersrente')",
@@ -166,9 +165,17 @@ class cls_createSchema():
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '0', 'GRUNDSTELLUNG_ODER_KEIN_KOSTENABZUG')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '1', 'KOSTENABZUG_FUER_EU_SCHECKZAHLUNGEN')",
                          "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '2', '')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '3', 'Kostenabzug für Zahlungsanweisungen zur Verrechnung')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '4', 'Rueckwirkende Kostenerstattung')",
-                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '5', 'Anwendung Haertefallregelung')"]
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '3', 'KOSTENABZUG_FUER_ZAHLUNGSANWEISUNG_ZUR_VERRECHNUNG')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '4', 'Rueckwirkende_Kostenerstattung')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('merkmalKostenabzugMMKO', '5', 'HAERTEFALLREGELUNG')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCMT', 'B', 'BEVOLLMAECHTIGTER')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCMT', 'V', 'Vertreter')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCMT', '0', 'Sonstiges')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCZE', 'B', 'BEVOLLMAECHTIGTER')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCZE', 'S', 'Sozialhilfetraeger')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCZE', 'V', 'Vertreter')",
+                         "insert into schluessel (feldAuftrag, keyAuftrag, keyRzp) values ('rechtsstellungRCZE', 'B', 'Sonstiges')",
+                         ]
         for sqlInsert in sqlInsertList:
            # print(sqlInsert)
             self.db.execSql(sqlInsert, '')

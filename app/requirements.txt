@@ -16,6 +16,9 @@ itsdangerous==2.1.2
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 mysql-connector-python==8.0.31
+openpyxl==3.1.1
+pandas==1.5.3
+numpy==1.24.2
 parse-type==0.6.0
 parse==1.19.0
 pip==22.3.1

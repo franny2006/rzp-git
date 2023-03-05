@@ -1,5 +1,6 @@
 import io
 import os
+import shutil
 from .cls_db import cls_dbAktionen
 
 #rzpDatenbanken = ['KUGA', 'AAN', 'WCH', 'PERF_IDENT', 'PERF_PERS', 'KAUS', 'REZA']
@@ -9,7 +10,7 @@ class cls_create_featureFiles():
         # Bestehende Feature-Files löschen
 
     #    dirsToDelete = ['../features', '../export', '../export/reports', '../export/allure-results']
-        dirsToDelete = ['features', 'export', 'export/reports', 'export/allure-results']
+        dirsToDelete = ['features', 'export', 'export/reports', 'export/allure-results', 'export/features']
         for dir in dirsToDelete:
             for f in os.listdir(dir):
                 try:
@@ -155,11 +156,12 @@ class cls_create_featureFiles():
         #    line = self.line + linesScenarioRollen
 
 
-
-        f = io.open('features/standard_' + dictAuftrag['transaktionsId'] + '.feature', 'w', encoding='UTF-8')
+        filename = 'features/standard_' + dictAuftrag['transaktionsId'] + '.feature'
+        f = io.open(filename, 'w', encoding='UTF-8')
         for zeile in self.line:
             f.write(zeile + "\n")
         f.close()
+        shutil.copyfile(filename, 'export/' + filename)
 
     def createFile_rollen(self, dictAuftrag):
         line = []
@@ -213,10 +215,16 @@ class cls_create_featureFiles():
     def konvertierungsregel_anwenden(self, regel, inhaltAuftrag):
         from datetime import datetime
         if regel == "datum":
-            inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+            try:
+                inhaltAuftrag = datetime.strptime(inhaltAuftrag, '%Y%m%d').date()
+            except:
+                pass
         elif regel.lower() == "datum_yyyymm":
-            dataTemp = datetime.strptime(inhaltAuftrag, '%Y%m').date()
-            inhaltAuftrag = dataTemp.strftime('%Y-%m')
+            try:
+                dataTemp = datetime.strptime(inhaltAuftrag, '%Y%m').date()
+                inhaltAuftrag = dataTemp.strftime('%Y-%m')
+            except:
+                pass
         elif regel[:3].lower() == 'ps_':
             feldAuftrag = regel[3:]
             sql = "select distinct keyRzp from schluessel where feldAuftrag = '" + str(feldAuftrag) + "' and keyAuftrag = '" + str(inhaltAuftrag) + "'"

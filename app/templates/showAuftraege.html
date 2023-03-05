@@ -44,7 +44,15 @@
     </thead>
     <tbody>
         {% for eintrag in data %}
-
+            {% if eintrag['ziel'] != None %}
+                    {% if eintrag['ziel'][:3].lower() == "rzp" %}
+                        {% set ziel = "RZP: " %}
+                    {% elif eintrag['ziel'][:4].lower() == "reds" %}
+                        {% set ziel = "REDS: " %}
+                    {% else %}
+                        {% set ziel = "" %}
+                    {% endif %}
+                {% endif %}
         <tr>
             <td align="center">
                 {% set status = status(eintrag['transaktionsId'], eintrag['ziel'], eintrag['zielwelt']) %}
@@ -63,16 +71,7 @@
             <td>{{ eintrag['rolleZe'] }}</td>
             <td>{{ eintrag['rolleBe'] }}</td>
             <td>{{ eintrag['rolleMe'] }}</td>
-            <td>{% if eintrag['ziel'] != None %}
-                    {% if eintrag['ziel'][:3].lower() == "rzp" %}
-                        {% set ziel = "RZP" %}
-                    {% elif eintrag['ziel'][:4].lower() == "reds" %}
-                        {% set ziel = "REDS" %}
-                    {% else %}
-                        {% set ziel = "?" %}
-                    {% endif %}
-                    {{ ziel }} - {{ eintrag['titel'] }}
-                {% endif %}</td>
+            <td>{{ ziel }}{{ eintrag['titel'] }}</td>
             <td>{{ eintrag['jiraId'] }}</td>
             <td><center><button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#auftragsdatei_{{eintrag['dsId'] }}" aria-expanded="false" aria-controls="auftragsdatei_{{eintrag['dsId'] }}">File</button></center>
                 <div class="collapse" id="auftragsdatei_{{eintrag['dsId'] }}"><div class="card card-body" style="white-space: nowrap;">{{ eintrag['datei'] }}</div></div></td>
